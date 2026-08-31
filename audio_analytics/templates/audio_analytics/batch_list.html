@@ -1,0 +1,106 @@
+{% extends 'audio_analytics/base.html' %}
+
+{% block title %}Batches — AudoAck AI{% endblock %}
+
+{% block content %}
+<div class="aa-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
+    <div>
+        <div class="aa-eyebrow mb-1">Processing</div>
+        <h1 class="h2 fw-bold mb-1">Batch history</h1>
+        <div class="text-muted small">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} batches
+        </div>
+    </div>
+
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label for="batch-page-size" class="text-muted small mb-0">Rows</label>
+        <select id="batch-page-size" name="page_size" class="form-select form-select-sm"
+                onchange="this.form.submit()" aria-label="Batches per page">
+            {% for size in page_size_options %}
+                <option value="{{ size }}" {% if size == page_size %}selected{% endif %}>{{ size }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="page" value="1">
+    </form>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Batch</th>
+                    <th>Source / device</th>
+                    <th>Uploaded</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for batch in batches %}
+                <tr>
+                    <td><strong>#{{ batch.id }}</strong></td>
+                    <td>
+                        {% if batch.device %}
+                            {{ batch.device.name }}
+                        {% else %}
+                            <span class="text-muted">Batch upload</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ batch.uploaded_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <span class="badge {% if batch.status == 'completed' %}bg-success{% elif batch.status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            {{ batch.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'batch_detail' batch.pk %}" class="btn btn-sm btn-outline-primary">Review batch</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-5">No batches available.</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4" aria-label="Batch pagination">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="small text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1&page_size={{ page_size }}">« First</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&page_size={{ page_size }}">‹ Prev</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">« First</span></li>
+                        <li class="page-item disabled"><span class="page-link">‹ Prev</span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}&page_size={{ page_size }}">{{ num }}</a></li>
+                        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&page_size={{ page_size }}">Next ›</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&page_size={{ page_size }}">Last »</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next ›</span></li>
+                        <li class="page-item disabled"><span class="page-link">Last »</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

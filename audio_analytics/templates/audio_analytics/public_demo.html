@@ -1,0 +1,168 @@
+{% extends 'audio_analytics/base.html' %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 650px;">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">🎙️ Live Voice Analysis Demo (Max 5s)</h5>
+      <span class="badge bg-info">No Login Required</span>
+    </div>
+    <div class="card-body text-center p-4">
+      <p class="text-muted">
+        Record up to 5 seconds of speech. The recording is sent as one 5-second
+        API v1 chunk and analyzed asynchronously.
+      </p>
+
+      <div class="my-4">
+        <div id="timer" class="display-6 fw-bold text-primary mb-3">00:00 / 00:05</div>
+        <button id="recordBtn" class="btn btn-danger btn-lg px-4 rounded-pill">🔴 Start Recording</button>
+        <button id="stopBtn" class="btn btn-secondary btn-lg px-4 rounded-pill d-none">⏹️ Stop & Analyze</button>
+      </div>
+
+      <div id="loading" class="d-none my-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Analyzing the 5-second audio chunk...</p>
+      </div>
+
+      <div id="results" class="text-start d-none mt-4 p-3 border rounded bg-light">
+        <h5 class="border-bottom pb-2">Analysis Results</h5>
+        <div class="row g-3">
+          <div class="col-6"><strong>Emotional Tone:</strong> <span id="resTone" class="badge bg-primary"></span></div>
+          <div class="col-6"><strong>Intensity:</strong> <span id="resIntensity"></span></div>
+          <div class="col-6"><strong>Noise Present:</strong> <span id="resNoise"></span></div>
+          <div class="col-6"><strong>Noise Severity:</strong> <span id="resNoiseSev"></span></div>
+          <div class="col-6"><strong>Audio Quality:</strong> <span id="resQuality"></span></div>
+          <div class="col-6"><strong>Confidence:</strong> <span id="resConfidence"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let recorder = null;
+let stream = null;
+let chunks = [];
+let timerInterval = null;
+let elapsed = 0;
+let demoBatchId = null;
+let demoToken = null;
+
+const recordBtn = document.getElementById('recordBtn');
+const stopBtn = document.getElementById('stopBtn');
+const timer = document.getElementById('timer');
+const loading = document.getElementById('loading');
+const results = document.getElementById('results');
+
+async function post(url, body = null, headers = {}) {
+  const response = await fetch(url, {
+    method: 'POST',
+    body,
+    headers,
+    credentials: 'same-origin',
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  return data;
+}
+
+recordBtn.addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio: true});
+
+    const start = await post('{% url "api_v1_demo_start" %}', new FormData());
+    demoBatchId = start.batch_id;
+    demoToken = start.demo_token;
+    chunks = [];
+    elapsed = 0;
+    results.classList.add('d-none');
+
+    recorder = new MediaRecorder(stream);
+    recorder.addEventListener('dataavailable', event => {
+      if (event.data.size) chunks.push(event.data);
+    });
+    recorder.addEventListener('stop', submitRecording, {once: true});
+    recorder.start();
+
+    recordBtn.classList.add('d-none');
+    stopBtn.classList.remove('d-none');
+    timerInterval = setInterval(() => {
+      elapsed += 1;
+      timer.textContent = `00:0${Math.min(elapsed, 5)} / 00:05`;
+      if (elapsed >= 5) stopRecording();
+    }, 1000);
+  } catch (error) {
+    stream?.getTracks().forEach(track => track.stop());
+    alert(error.message || 'Microphone access denied or unavailable.');
+  }
+});
+
+stopBtn.addEventListener('click', stopRecording);
+
+function stopRecording() {
+  if (!recorder || recorder.state === 'inactive') return;
+  clearInterval(timerInterval);
+  recorder.stop();
+  stream?.getTracks().forEach(track => track.stop());
+  stopBtn.classList.add('d-none');
+  recordBtn.classList.remove('d-none');
+  recordBtn.textContent = '🔄 Record Again';
+}
+
+async function submitRecording() {
+  loading.classList.remove('d-none');
+
+  try {
+    const blob = new Blob(chunks, {type: recorder.mimeType || 'audio/webm'});
+    const form = new FormData();
+    form.append('chunk_data', blob, 'demo_5s.webm');
+
+    await post(
+      `/api/v1/demo/${demoBatchId}/chunk/`,
+      form,
+      {'X-Demo-Token': demoToken},
+    );
+
+    for (let attempt = 0; attempt < 30; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch(
+        `/api/v1/demo/${demoBatchId}/analysis/`,
+        {headers: {'X-Demo-Token': demoToken}, credentials: 'same-origin'}
+      );
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        renderResults(data.analysis);
+        await post(
+          `/api/v1/demo/${demoBatchId}/finalize/`,
+          null,
+          {'X-Demo-Token': demoToken},
+        );
+        return;
+      }
+
+      if (data.status === 'failed') throw new Error(data.error || 'Analysis failed.');
+    }
+
+    throw new Error('Analysis timed out. Please try again.');
+  } catch (error) {
+    alert(error.message || 'Server communication error.');
+  } finally {
+    loading.classList.add('d-none');
+    stream = null;
+    recorder = null;
+  }
+}
+
+function renderResults(data) {
+  document.getElementById('resTone').textContent = (data.emotional_tone || '').toUpperCase();
+  document.getElementById('resIntensity').textContent = data.emotional_intensity || '—';
+  document.getElementById('resNoise').textContent = data.background_noise_present ? 'Yes' : 'No';
+  document.getElementById('resNoiseSev').textContent = data.background_noise_severity || '—';
+  document.getElementById('resQuality').textContent = data.audio_quality || '—';
+  document.getElementById('resConfidence').textContent =
+    data.confidence == null ? '—' : `${(Number(data.confidence) * 100).toFixed(0)}%`;
+  results.classList.remove('d-none');
+}
+</script>
+{% endblock %}

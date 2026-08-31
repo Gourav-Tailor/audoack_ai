@@ -1,0 +1,20 @@
+{% extends 'audio_analytics/base.html' %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 450px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Create User Account</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
+            </form>
+            <hr>
+            <p class="text-center mb-0">Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

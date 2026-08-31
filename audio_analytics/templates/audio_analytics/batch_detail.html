@@ -1,0 +1,329 @@
+{% extends 'audio_analytics/base.html' %}
+
+{% block title %}Batch #{{ batch.id }} Details - AudoAck AI{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2>Batch #{{ batch.id }} Results</h2>
+        <span class="text-muted">Uploaded: {{ batch.uploaded_at|date:"M d, Y H:i:s" }}</span>
+    </div>
+    <a href="{% url 'batch_export' batch.pk %}" class="btn btn-success fw-bold">
+        📥 Download Output CSV
+    </a>
+</div>
+
+{% if batch.status == 'pending' or batch.status == 'processing' %}
+<div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+    <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+    <div>
+        <strong>Processing Batch in Background...</strong>
+        Progress: {{ batch.processed_files }} of {{ batch.total_files }} files analyzed.
+    </div>
+</div>
+<script>
+    setTimeout(function() {
+        window.location.reload();
+    }, 3000);
+</script>
+{% endif %}
+
+{% if batch.error_message %}
+<div class="alert alert-danger mb-4">
+    <strong>Batch Processing Error:</strong> {{ batch.error_message }}
+</div>
+{% endif %}
+
+{% if metrics %}
+<div class="card card-custom mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title fw-bold mb-0">Ground Truth Validation Metrics (labels.csv)</h5>
+            <span class="badge bg-primary">Evaluated on {{ metrics.sample_count }} files</span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <span class="badge bg-success fs-6 py-2 px-3">
+                Emotional Tone Macro F1: {{ metrics.emotional_tone_macro_f1 }}
+            </span>
+            <span class="badge bg-info text-dark fs-6 py-2 px-3">
+                Noise Detection Accuracy: {{ metrics.noise_detection_accuracy|floatformat:2 }}%
+            </span>
+        </div>
+
+        <h6>Emotional Tone Confusion Matrix (Predicted vs Actual)</h6>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Actual \ Predicted</th>
+                        {% for label in metrics.tone_labels %}
+                            <th>{{ label|title }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in metrics.tone_confusion_matrix %}
+                        <tr>
+                            <th class="table-secondary">
+                                {% if forloop.counter0 == 0 %}Neutral
+                                {% elif forloop.counter0 == 1 %}Satisfied
+                                {% elif forloop.counter0 == 2 %}Frustrated
+                                {% elif forloop.counter0 == 3 %}Upset
+                                {% elif forloop.counter0 == 4 %}Distressed{% endif %}
+                            </th>
+                            {% for val in row %}
+                                <td class="{% if forloop.counter0 == forloop.parentloop.counter0 %}bg-light fw-bold text-success{% endif %}">
+                                    {{ val }}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card card-custom mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <div>
+                <h5 class="card-title fw-bold mb-1">Audio Analysis Wave</h5>
+                <div class="text-muted small">
+                    Graph shows the {{ page_obj.paginator.count }} analysis records using the current page.
+                    Bar height represents confidence.
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-3 small text-muted">
+                <span><span class="d-inline-block rounded me-1" style="width:10px;height:10px;background:#2bb673;"></span>steady / clear</span>
+                <span><span class="d-inline-block rounded me-1" style="width:10px;height:10px;background:#ffb43b;"></span>mild friction</span>
+                <span><span class="d-inline-block rounded me-1" style="width:10px;height:10px;background:#ff6b5e;"></span>tension / lost clarity</span>
+                <span><span class="d-inline-block rounded me-1" style="width:10px;height:10px;background:#4da3e6;"></span>a pause</span>
+            </div>
+        </div>
+
+        {% if analyses %}
+        <div style="height: 360px; position: relative;">
+            <canvas id="analysisWaveChart" aria-label="Audio analysis confidence graph" role="img"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            No analysis records are available on this page.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h5 class="card-title fw-bold mb-1">Clip Predictions</h5>
+                <div class="text-muted small">
+                    Showing {{ page_obj.start_index|default:"0" }}–{{ page_obj.end_index|default:"0" }}
+                    of {{ page_obj.paginator.count }} analysis records
+                </div>
+            </div>
+
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="analysis-page-size" class="text-muted small mb-0">Page size</label>
+                <select id="analysis-page-size" name="page_size" class="form-select form-select-sm"
+                        onchange="this.form.submit()" aria-label="Audio analyses per page">
+                    {% for size in page_size_options %}
+                        <option value="{{ size }}" {% if size == page_size %}selected{% endif %}>
+                            {{ size }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="page" value="1">
+                <input type="hidden" name="sort" value="{{ sort_field }}">
+                <input type="hidden" name="direction" value="{{ sort_direction }}">
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 70px;">S.No.</th>
+                        {% for column in sortable_columns %}
+                        <th>
+                            <a
+                                href="{{ column.url }}"
+                                class="text-decoration-none text-dark d-inline-flex align-items-center gap-1"
+                                aria-label="Sort by {{ column.label }}"
+                            >
+                                <span>{{ column.label }}</span>
+                                <span aria-hidden="true" class="small text-muted">
+                                    {% if column.active %}
+                                        {% if column.direction == "asc" %}↑{% else %}↓{% endif %}
+                                    {% else %}
+                                        ↕
+                                    {% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        {% endfor %}
+                        <th>Listen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for analysis in analyses %}
+                    <tr>
+                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td><code>{{ analysis.filename }}</code></td>
+                        <td><span class="badge bg-info text-dark">{{ analysis.emotional_tone|default:"-" }}</span></td>
+                        <td>{{ analysis.emotional_intensity|default:"-" }}</td>
+                        <td>
+                            {% if analysis.background_noise_present %}
+                            <span class="badge bg-warning text-dark">True</span>
+                            {% else %}
+                            <span class="badge bg-secondary">False</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ analysis.background_noise_severity|default:"-" }}</td>
+                        <td>{{ analysis.audio_quality|default:"-" }}</td>
+                        <td>{{ analysis.speaker_overlap_present }}</td>
+                        <td>{{ analysis.long_silence_present }}</td>
+                        <td><strong>{{ analysis.confidence|default:"0.0" }}</strong></td>
+                        <td style="min-width: 240px;">
+                            {% if analysis.audio_playback_url %}
+                                <audio controls preload="none" class="w-100"
+                                       aria-label="Play {{ analysis.filename }}">
+                                    <source src="{{ analysis.audio_playback_url }}" type="audio/wav">
+                                    Your browser does not support audio playback.
+                                </audio>
+                            {% else %}
+                                <span class="text-muted small">Audio unavailable</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-4">
+                            No individual file records processed.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4" aria-label="Audio analysis pagination">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="small text-muted">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </div>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="{{ pagination_urls.first }}">« First</a></li>
+                        <li class="page-item"><a class="page-link" href="{{ pagination_urls.previous }}">‹ Prev</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">« First</span></li>
+                        <li class="page-item disabled"><span class="page-link">‹ Prev</span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}&page_size={{ page_size }}&sort={{ sort_field }}&direction={{ sort_direction }}">{{ num }}</a></li>
+                        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ pagination_urls.next }}">Next ›</a></li>
+                        <li class="page-item"><a class="page-link" href="{{ pagination_urls.last }}">Last »</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next ›</span></li>
+                        <li class="page-item disabled"><span class="page-link">Last »</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+{% if analyses %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ chart_data|json_script:"analysis-chart-data" }}
+<script>
+(function () {
+    const dataElement = document.getElementById("analysis-chart-data");
+    const canvas = document.getElementById("analysisWaveChart");
+    if (!dataElement || !canvas) return;
+
+    const records = JSON.parse(dataElement.textContent);
+    const toneColors = {
+        neutral: "#ffb43b",
+        satisfied: "#2bb673",
+        frustrated: "#ff6b5e",
+        upset: "#ff6b5e",
+        distressed: "#ff6b5e",
+        unknown: "#4da3e6"
+    };
+
+    const labels = records.map(item => item.filename);
+    const values = records.map(item => Math.max(0, Math.min(1, Number(item.confidence) || 0)));
+    const colors = records.map(item => toneColors[String(item.tone || "unknown").toLowerCase()] || "#ffb43b");
+
+    new Chart(canvas, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Confidence",
+                data: values,
+                backgroundColor: colors,
+                borderRadius: 7,
+                borderSkipped: false,
+                maxBarThickness: 28
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: { callback: value => `${Math.round(value * 100)}%` },
+                    title: { display: true, text: "Confidence" }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { maxRotation: 60, minRotation: 0, autoSkip: true, maxTicksLimit: 20 }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: items => records[items[0].dataIndex].filename,
+                        label: function (context) {
+                            const item = records[context.dataIndex];
+                            return [
+                                `Confidence: ${Math.round(item.confidence * 100)}%`,
+                                `Tone: ${item.tone}`,
+                                `Intensity: ${item.intensity}`,
+                                `Noise: ${item.noise ? "Yes" : "No"} (${item.noise_severity})`,
+                                `Quality: ${item.quality}`,
+                                `Overlap: ${item.overlap ? "Yes" : "No"}`,
+                                `Silence: ${item.silence ? "Yes" : "No"}`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

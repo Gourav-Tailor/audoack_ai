@@ -1,0 +1,217 @@
+{% extends 'audio_analytics/base.html' %}
+{% load static %}
+{% block title %}AudoAck AI — Audio intelligence for connected devices{% endblock %}
+{% block content %}
+<style>
+  .aa-brand-logo{width:34px;height:34px;border-radius:10px;display:block;object-fit:contain;flex:0 0 34px}
+  .aa-page{background:#f8fafc;color:#0f172a}
+  .aa-nav{background:rgba(255,255,255,.95);border-bottom:1px solid #e2e8f0;backdrop-filter:blur(12px)}
+  .aa-brand{color:#0f172a;text-decoration:none;font-weight:800;letter-spacing:-.03em}
+  .aa-mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#2563eb;color:#fff}
+  .aa-nav a{color:#475569;text-decoration:none;font-size:.92rem}
+  .aa-nav a:hover{color:#2563eb}
+  .aa-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0f172a,#172554 55%,#1d4ed8);color:#fff;border-radius:28px}
+  .aa-hero:after{content:"";position:absolute;width:420px;height:420px;right:-170px;top:-190px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .aa-hero>*{position:relative;z-index:1}
+  .aa-pill{display:inline-flex;align-items:center;gap:.45rem;padding:.42rem .75rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.08);font-size:.8rem}
+  .aa-hero h1{max-width:760px;letter-spacing:-.045em;line-height:1.02}
+  .aa-muted-white{color:rgba(255,255,255,.72)}
+  .aa-product{border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.5);box-shadow:0 24px 70px rgba(2,6,23,.3);backdrop-filter:blur(12px)}
+  .aa-window{border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;background:#0b1220}
+  .aa-window-bar{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .aa-dot{width:7px;height:7px;border-radius:50%;background:#64748b}
+  .aa-chart{height:118px;display:flex;align-items:end;gap:6px;padding:18px}
+  .aa-bar{flex:1;border-radius:5px 5px 2px 2px;background:#3b82f6}
+  .aa-section{scroll-margin-top:5rem}
+  .aa-kicker{color:#2563eb;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.12em}
+  .aa-card{height:100%;border:1px solid #e2e8f0;border-radius:18px;background:#fff;transition:.18s}
+  .aa-card:hover{transform:translateY(-3px);box-shadow:0 14px 35px rgba(15,23,42,.08);border-color:#cbd5e1}
+  .aa-icon{width:46px;height:46px;border-radius:13px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-size:20px}
+  .aa-step{width:32px;height:32px;border-radius:50%;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-weight:800}
+  .aa-dark{background:#0f172a;color:#fff;border-radius:22px}
+  .aa-row{border-top:1px solid #e2e8f0}
+  .aa-cta{background:#eff6ff;border:1px solid #dbeafe;border-radius:24px}
+  .aa-footer a{color:#475569;text-decoration:none}
+  .aa-footer a:hover{color:#1d4ed8}
+  .aa-modal .modal-content{border:0;border-radius:22px;box-shadow:0 28px 80px rgba(15,23,42,.24)}
+  .aa-modal .modal-header{border:0;padding:24px 24px 8px}
+  .aa-modal .modal-body{padding:12px 24px 24px}
+  .aa-modal .form-control{border-radius:10px;padding:.72rem .85rem;border-color:#cbd5e1}
+  .aa-modal .form-control:focus{border-color:#2563eb;box-shadow:0 0 0 .2rem rgba(37,99,235,.12)}
+  @media(max-width:768px){.aa-nav-link{display:none}.aa-hero{border-radius:20px}.aa-hero h1{font-size:2.7rem}}
+</style>
+
+<div class="aa-page">
+  <nav class="aa-nav sticky-top">
+    <div class="container py-2" style="max-width:1180px">
+      <div class="d-flex align-items-center justify-content-between">
+        <a class="aa-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+          <img class="aa-brand-logo" src="{% static 'audio_analytics/images/audoack-logo.png' %}" alt="AudoAck AI logo"><span>AudoAck AI</span>
+        </a>
+        <div class="d-flex align-items-center gap-4">
+          <a class="aa-nav-link" href="#platform">Platform</a>
+          <a class="aa-nav-link" href="#how-it-works">How it works</a>
+          <a class="aa-nav-link" href="#signals">Analysis</a>
+          <a class="aa-nav-link" href="#privacy">Privacy</a>
+          {% if user.is_authenticated %}
+            <a class="btn btn-primary btn-sm px-3" href="{% url 'dashboard' %}">Open Dashboard</a>
+          {% else %}
+            <button class="btn btn-outline-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#loginModal">Sign in</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4 py-lg-5" style="max-width:1180px">
+    <section class="aa-hero p-4 p-lg-5 mb-5">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+          <div class="aa-pill mb-4">🎙️ Audio intelligence for connected devices</div>
+          <h1 class="display-3 fw-bold mb-4">Turn real-world audio into useful signals.</h1>
+          <p class="lead aa-muted-white mb-0" style="max-width:650px">
+            AudoAck gives apps and connected devices a simple path from audio capture to AI-assisted analysis, confidence signals and reviewable results.
+          </p>
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <a href="{% url 'public_demo' %}" class="btn btn-light btn-lg px-4">Try the live demo</a>
+            {% if user.is_authenticated %}
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-lg px-4">Go to dashboard</a>
+            {% else %}
+              <button class="btn btn-outline-light btn-lg px-4" data-bs-toggle="modal" data-bs-target="#loginModal">Sign in</button>
+            {% endif %}
+          </div>
+          <div class="d-flex flex-wrap gap-4 mt-4 small aa-muted-white">
+            <span><i class="bi bi-check2" aria-hidden="true"></i> Android capture</span><span><i class="bi bi-check2" aria-hidden="true"></i> Device-aware results</span><span><i class="bi bi-check2" aria-hidden="true"></i> Browser dashboard</span>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="aa-product rounded-4 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div><div class="small text-white-50">AudoAck workspace</div><div class="fw-semibold">Latest analysis</div></div>
+              <span class="badge text-bg-success">Processed</span>
+            </div>
+            <div class="aa-window">
+              <div class="aa-window-bar"><span class="aa-dot"></span><span class="aa-dot"></span><span class="aa-dot"></span></div>
+              <div class="p-3">
+                <div class="d-flex justify-content-between small text-white-50 mb-2"><span>Audio signal profile</span><span>Confidence 82%</span></div>
+                <div class="progress mb-3" style="height:7px;background:#1e293b"><div class="progress-bar" style="width:82%"></div></div>
+                <div class="aa-chart">
+                  <span class="aa-bar" style="height:35%"></span><span class="aa-bar" style="height:62%"></span><span class="aa-bar" style="height:46%"></span><span class="aa-bar" style="height:78%"></span><span class="aa-bar" style="height:58%"></span><span class="aa-bar" style="height:88%"></span><span class="aa-bar" style="height:68%"></span><span class="aa-bar" style="height:96%"></span><span class="aa-bar" style="height:74%"></span><span class="aa-bar" style="height:52%"></span>
+                </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-4"><div class="rounded-3 p-2" style="background:#111c2e"><div class="small text-white-50">Tone</div><div class="fw-semibold">Detected</div></div></div>
+                  <div class="col-4"><div class="rounded-3 p-2" style="background:#111c2e"><div class="small text-white-50">Quality</div><div class="fw-semibold">Good</div></div></div>
+                  <div class="col-4"><div class="rounded-3 p-2" style="background:#111c2e"><div class="small text-white-50">Noise</div><div class="fw-semibold">Low</div></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="small text-white-50 mt-3">Capture <i class="bi bi-arrow-right" aria-hidden="true"></i> upload <i class="bi bi-arrow-right" aria-hidden="true"></i> analyze <i class="bi bi-arrow-right" aria-hidden="true"></i> review</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-5">
+      <div class="row g-3 text-center">
+        <div class="col-md-4"><div class="border-start border-3 border-primary py-2"><div class="fw-bold">Capture anywhere</div><div class="small text-muted">Mobile and connected-device audio workflows</div></div></div>
+        <div class="col-md-4"><div class="border-start border-3 border-primary py-2"><div class="fw-bold">Analyze consistently</div><div class="small text-muted">Structured signals from every submitted recording</div></div></div>
+        <div class="col-md-4"><div class="border-start border-3 border-primary py-2"><div class="fw-bold">Review in one place</div><div class="small text-muted">Dashboard, batches and latest device results</div></div></div>
+      </div>
+    </section>
+
+    <section class="aa-section mb-5" id="platform">
+      <div class="mb-4"><div class="aa-kicker mb-2">The platform</div><h2 class="fw-bold display-6 mb-2">One workflow from sound to signal.</h2><p class="text-muted mb-0">AudoAck is designed around the actual path your audio takes through the system.</p></div>
+      <div class="row g-4">
+        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">📱</div><h4 class="fw-bold">Capture</h4><p class="text-muted mb-0">Record audio from the Android app or a connected device and send it to the AudoAck backend.</p></div></div>
+        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">⚙️</div><h4 class="fw-bold">Process</h4><p class="text-muted mb-0">Process submitted audio and produce structured analysis results for each recording.</p></div></div>
+        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">📊</div><h4 class="fw-bold">Understand</h4><p class="text-muted mb-0">Review signals, confidence values, batch results and latest device analysis.</p></div></div>
+      </div>
+    </section>
+
+    <section class="aa-section mb-5" id="how-it-works">
+      <div class="text-center mb-4"><div class="aa-kicker mb-2">How it works</div><h2 class="fw-bold display-6">Simple for users. Structured for systems.</h2></div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">1</div><h5 class="fw-bold">Record</h5><p class="text-muted mb-0">Capture a short audio segment from the app or device.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">2</div><h5 class="fw-bold">Send</h5><p class="text-muted mb-0">Upload the recording through the authenticated workflow.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">3</div><h5 class="fw-bold">Analyze</h5><p class="text-muted mb-0">Run the audio through the analysis pipeline and capture signals.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">4</div><h5 class="fw-bold">Review</h5><p class="text-muted mb-0">Inspect results in the dashboard or retrieve latest device analysis.</p></div></div>
+      </div>
+    </section>
+
+    <section class="aa-section mb-5" id="signals">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="aa-card p-4 p-lg-5">
+            <div class="aa-kicker mb-2">Analysis</div>
+            <h2 class="fw-bold mb-3">Signals that make recordings easier to understand.</h2>
+            <p class="text-muted mb-4">The current analysis experience exposes multiple audio characteristics rather than a single opaque score.</p>
+            <div class="row g-3">
+              <div class="col-sm-6"><strong>Emotional tone</strong><div class="small text-muted">Tone category and confidence information.</div></div>
+              <div class="col-sm-6"><strong>Intensity</strong><div class="small text-muted">Low, medium or high intensity indicators.</div></div>
+              <div class="col-sm-6"><strong>Background noise</strong><div class="small text-muted">Presence and severity indicators.</div></div>
+              <div class="col-sm-6"><strong>Audio quality</strong><div class="small text-muted">Signals describing recording quality.</div></div>
+              <div class="col-sm-6"><strong>Speaker overlap</strong><div class="small text-muted">Signals for overlapping speech.</div></div>
+              <div class="col-sm-6"><strong>Long silence</strong><div class="small text-muted">Indicators for extended silent segments.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5"><div class="aa-dark p-4 p-lg-5 h-100"><div class="small text-white-50">Built for iteration</div><h3 class="fw-bold my-3">Start with audio. Build from the data.</h3><p class="text-white-50">Try the public analyzer, then sign in to work with your recordings, batches and devices.</p><a class="btn btn-light mt-2" href="{% url 'public_demo' %}">Open live demo <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div></div>
+      </div>
+    </section>
+
+    <section class="mb-5">
+      <div class="aa-row py-4"><div class="row align-items-center g-3"><div class="col-md-5"><h4 class="fw-bold mb-0">Device-aware workflows</h4></div><div class="col-md-7 text-muted">Connect recordings to devices and retrieve the latest available analysis through application APIs.</div></div></div>
+      <div class="aa-row py-4"><div class="row align-items-center g-3"><div class="col-md-5"><h4 class="fw-bold mb-0">Batch processing</h4></div><div class="col-md-7 text-muted">Upload batches for asynchronous processing and inspect detailed results and metrics.</div></div></div>
+      <div class="aa-row py-4"><div class="row align-items-center g-3"><div class="col-md-5"><h4 class="fw-bold mb-0">Usage-aware billing</h4></div><div class="col-md-7 text-muted">Track usage and payments as the AudoAck service evolves.</div></div></div>
+    </section>
+
+    <section class="aa-section mb-5" id="privacy">
+      <div class="aa-cta p-4 p-lg-5"><div class="row align-items-center g-4"><div class="col-lg-8"><div class="aa-kicker mb-2">Privacy & data</div><h3 class="fw-bold mb-2">Audio should be handled deliberately.</h3><p class="text-muted mb-0">Review how AudoAck handles account, device, audio and analysis information before using the service.</p></div><div class="col-lg-4 text-lg-end"><a href="{% url 'privacy_policy' %}" class="btn btn-outline-primary px-4">Read privacy policy</a></div></div></div>
+    </section>
+
+    <section class="mb-4">
+      <div class="aa-dark text-center p-4 p-lg-5">
+        <div class="aa-pill mb-3">AudoAck AI</div>
+        <h2 class="fw-bold display-6">Ready to hear what your data can tell you?</h2>
+        <p class="text-white-50 mx-auto mb-4" style="max-width:650px">Try the analyzer without an account, or sign in to manage your own audio workflows and connected devices.</p>
+        <div class="d-flex justify-content-center flex-wrap gap-2">
+          <a href="{% url 'public_demo' %}" class="btn btn-light btn-lg px-4">Try the demo</a>
+          {% if not user.is_authenticated %}<button class="btn btn-outline-light btn-lg px-4" data-bs-toggle="modal" data-bs-target="#loginModal">Sign in</button>{% else %}<a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-lg px-4">Open dashboard</a>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <footer class="aa-footer border-top pt-4 pb-4">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+        <span class="small text-muted">© {% now "Y" %} AudoAck AI</span>
+        <div><a class="small me-3" href="{% url 'privacy_policy' %}">Privacy Policy</a><a class="small" href="{% url 'public_demo' %}">Live Demo</a></div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+{% if not user.is_authenticated %}
+<div class="modal fade aa-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div><div class="aa-kicker mb-1">Welcome back</div><h3 class="fw-bold mb-0" id="loginModalLabel">Sign in to AudoAck</h3></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <div class="mb-3"><label for="aa_username" class="form-label fw-semibold">Username</label><input id="aa_username" name="username" type="text" class="form-control" autocomplete="username" required></div>
+          <div class="mb-3"><label for="aa_password" class="form-label fw-semibold">Password</label><input id="aa_password" name="password" type="password" class="form-control" autocomplete="current-password" required></div>
+          <input type="hidden" name="next" value="{% url 'dashboard' %}">
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Sign in</button>
+        </form>
+        <div class="text-center mt-3 small text-muted">Don't have an account? <a href="{% url 'signup' %}">Create an account</a></div>
+        <div class="text-center mt-2"><a class="small text-decoration-none" href="{% url 'public_demo' %}">Try the live demo without signing in <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

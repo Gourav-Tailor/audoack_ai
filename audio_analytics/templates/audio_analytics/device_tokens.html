@@ -1,0 +1,139 @@
+{% extends 'audio_analytics/base.html' %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 800px;">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📡 Device & App Tokens</h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted">
+                Create a token for each device or app (ESP32, Raspberry Pi, mobile app) you want
+                to record with. Each device gets its own token — treat it like a password and
+                revoke it if a device is lost or retired.
+            </p>
+
+            <form method="post" class="row g-2 align-items-end">
+                {% csrf_token %}
+                <div class="col-sm-8">
+                    <label for="deviceName" class="form-label fw-bold">Device name</label>
+                    <input type="text" id="deviceName" name="device_name" class="form-control"
+                           placeholder="e.g. Living Room ESP32, My iPhone" required maxlength="100">
+                </div>
+                <div class="col-sm-4 d-grid">
+                    <button type="submit" class="btn btn-danger">+ Create Token</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Your Devices</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if devices %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Token</th>
+                                <th>Last Seen</th>
+                                <th>Created</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td class="fw-bold">{{ device.name }}</td>
+                                <td>
+                                    <code class="device-token" data-token="{{ device.key }}">
+                                        {{ device.key|slice:":8" }}••••••••••••••••••••••••••••••••
+                                    </code>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary ms-2 reveal-btn"
+                                            data-token="{{ device.key }}">
+                                        Show
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary ms-1 copy-btn"
+                                            data-token="{{ device.key }}">
+                                        Copy
+                                    </button>
+                                </td>
+                                <td class="text-muted">
+                                    {% if device.last_seen %}{{ device.last_seen }}{% else %}Never{% endif %}
+                                </td>
+                                <td class="text-muted">{{ device.created_at }}</td>
+                                <td class="text-end">
+                                    <form method="post" action="{% url 'delete_device' device.id %}"
+                                          onsubmit="return confirm('Revoke and delete \'{{ device.name }}\'? This cannot be undone.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Revoke</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center text-muted p-4">
+                    No devices yet. Create one above to get a token.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4 text-muted small">
+        <strong>Using a token:</strong> send it as an HTTP header on every request to the device API —
+        <code>Authorization: Token &lt;key&gt;</code>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.reveal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const row = btn.closest('td');
+        const codeEl = row.querySelector('.device-token');
+        const fullToken = btn.dataset.token;
+        const isRevealed = codeEl.dataset.revealed === "true";
+
+        if (isRevealed) {
+            codeEl.textContent = fullToken.slice(0, 8) + "••••••••••••••••••••••••••••••••";
+            codeEl.dataset.revealed = "false";
+            btn.textContent = "Show";
+        } else {
+            codeEl.textContent = fullToken;
+            codeEl.dataset.revealed = "true";
+            btn.textContent = "Hide";
+        }
+    });
+});
+
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(btn.dataset.token);
+            const original = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        } catch (err) {
+            alert("Could not copy automatically. Token: " + btn.dataset.token);
+        }
+    });
+});
+</script>
+{% endblock %}

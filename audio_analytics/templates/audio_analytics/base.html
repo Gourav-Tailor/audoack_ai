@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AudoAck AI - Audio Analytics{% endblock %}</title>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'audio_analytics/images/audoack-logo.png' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --aa-primary: #2563eb;
+            --aa-primary-dark: #1d4ed8;
+            --aa-primary-soft: #eff6ff;
+            --aa-bg: #f6f8fb;
+            --aa-surface: #ffffff;
+            --aa-sidebar: #0f172a;
+            --aa-sidebar-hover: #1e293b;
+            --aa-text: #0f172a;
+            --aa-muted: #64748b;
+            --aa-border: #e2e8f0;
+            --aa-success: #16a34a;
+            --aa-warning: #d97706;
+            --aa-danger: #dc2626;
+            --aa-radius: 14px;
+            --aa-sidebar-width: 252px;
+            --aa-sidebar-collapsed-width: 76px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--aa-bg);
+            color: var(--aa-text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 14px;
+            overflow-x: hidden;
+        }
+        a { color: var(--aa-primary); }
+        a:hover { color: var(--aa-primary-dark); }
+        .container-fluid { padding: 0 !important; }
+        .container-fluid > .row { margin: 0 !important; }
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: var(--aa-sidebar-width);
+            min-height: 100vh !important;
+            z-index: 1030;
+            padding: 20px 14px !important;
+            background: var(--aa-sidebar) !important;
+            border-right: 1px solid #1e293b;
+            color: #fff;
+            transition: width .2s ease, transform .2s ease;
+            overflow: hidden;
+        }
+        .sidebar > h4 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 48px 12px 10px;
+            margin: 0 !important;
+            font-size: 18px;
+            letter-spacing: -.02em;
+            white-space: nowrap;
+        }
+        .sidebar nav { gap: 4px !important; }
+        .sidebar nav a,
+        .sidebar nav .nav-link {
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            padding: 10px 12px !important;
+            border-radius: 10px;
+            color: #94a3b8 !important;
+            font-weight: 600;
+            text-decoration: none;
+            transition: .15s ease;
+            white-space: nowrap;
+        }
+        .sidebar nav a::before,
+        .sidebar nav .nav-link::before {
+            content: "";
+            flex: 0 0 7px;
+            width: 7px;
+            height: 7px;
+            margin-right: 11px;
+            border-radius: 50%;
+            background: #475569;
+        }
+        .sidebar nav a:hover,
+        .sidebar nav a.active,
+        .sidebar nav .nav-link:hover {
+            background: var(--aa-sidebar-hover);
+            color: #fff !important;
+        }
+        .sidebar nav a.active::before {
+            background: #60a5fa;
+            box-shadow: 0 0 0 4px rgba(37,99,235,.18);
+        }
+        .sidebar .mt-auto {
+            padding: 16px 10px 4px !important;
+            border-color: #334155 !important;
+            white-space: nowrap;
+        }
+        .sidebar .btn-outline-light {
+            border-color: #334155;
+            color: #cbd5e1;
+            border-radius: 9px;
+        }
+        .sidebar .btn-outline-light:hover { background: #1e293b; color: #fff; }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 20px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            z-index: 2;
+        }
+        .sidebar-toggle:hover { background: #334155; color: #fff; }
+        .sidebar-collapsed .sidebar { width: var(--aa-sidebar-collapsed-width); }
+        .sidebar-collapsed .sidebar > h4 {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 32px;
+        }
+        .sidebar-collapsed .sidebar > h4 { font-size: 0; }
+        .sidebar-collapsed .sidebar nav a,
+        .sidebar-collapsed .sidebar nav .nav-link { justify-content: center; padding-left: 0 !important; padding-right: 0 !important; font-size: 0; }
+        .sidebar-collapsed .sidebar nav a::before,
+        .sidebar-collapsed .sidebar nav .nav-link::before { margin-right: 0; }
+        .sidebar-collapsed .sidebar .mt-auto { padding-left: 0 !important; padding-right: 0 !important; text-align: center; }
+        .sidebar-collapsed .sidebar .mt-auto > div { font-size: 0 !important; }
+        .sidebar-collapsed .sidebar .mt-auto .btn { font-size: 0; padding-left: 0; padding-right: 0; }
+        .sidebar-collapsed .sidebar-toggle { right: 22px; transform: rotate(180deg); }
+
+        main {
+            width: 100%;
+            min-height: 100vh;
+            margin-left: 0;
+            padding: 30px 34px !important;
+        }
+        .sidebar-collapsed .sidebar > h4 span {
+            display: none;
+        }
+        .sidebar-open-button {
+            position: fixed;
+            top: 20px;
+            left: 14px;
+            width: 38px;
+            height: 38px;
+            display: none;
+            place-items: center;
+            border: 1px solid var(--aa-border);
+            border-radius: 9px;
+            background: #fff;
+            color: var(--aa-text);
+            box-shadow: 0 2px 8px rgba(15,23,42,.08);
+            cursor: pointer;
+            z-index: 1020;
+        }
+        .sidebar-collapsed .sidebar-open-button { display: none; }
+
+        .card,
+        .card-custom {
+            border: 1px solid var(--aa-border) !important;
+            border-radius: var(--aa-radius) !important;
+            background: var(--aa-surface);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .03) !important;
+        }
+        .card:hover { box-shadow: 0 8px 24px rgba(15, 23, 42, .05) !important; }
+        .card-header { border-bottom: 1px solid var(--aa-border); background: #fff !important; color: var(--aa-text) !important; border-radius: var(--aa-radius) var(--aa-radius) 0 0 !important; }
+        .bg-primary { background-color: var(--aa-primary) !important; }
+        .btn-primary { --bs-btn-bg: var(--aa-primary); --bs-btn-border-color: var(--aa-primary); --bs-btn-hover-bg: var(--aa-primary-dark); --bs-btn-hover-border-color: var(--aa-primary-dark); border-radius: 9px; font-weight: 700; }
+        .btn-outline-primary { --bs-btn-color: var(--aa-primary); --bs-btn-border-color: #bfdbfe; --bs-btn-hover-bg: var(--aa-primary-soft); --bs-btn-hover-color: var(--aa-primary-dark); --bs-btn-hover-border-color: #93c5fd; border-radius: 9px; font-weight: 700; }
+        .btn-success, .btn-danger, .btn-secondary, .btn-outline-secondary { border-radius: 9px; font-weight: 700; }
+        .form-control, .form-select { border-color: #cbd5e1; border-radius: 9px; min-height: 40px; }
+        .form-control:focus, .form-select:focus { border-color: #93c5fd; box-shadow: 0 0 0 .2rem rgba(37,99,235,.10); }
+        .table { --bs-table-bg: transparent; --bs-table-hover-bg: #f8fafc; color: var(--aa-text); }
+        .table thead th { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; border-bottom-color: var(--aa-border); white-space: nowrap; }
+        .table td { border-color: #eef2f7; padding-top: 13px; padding-bottom: 13px; }
+        .badge { border-radius: 999px; padding: .45em .72em; font-weight: 700; }
+        .page-link { color: var(--aa-primary); border-color: var(--aa-border); border-radius: 8px !important; margin: 0 2px; }
+        .page-item.active .page-link { background: var(--aa-primary); border-color: var(--aa-primary); }
+        code { color: #475569; background: #f1f5f9; padding: 2px 5px; border-radius: 5px; }
+        .aa-page-header { margin-bottom: 24px; }
+        .aa-page-header h1, .aa-page-header h2, .aa-page-header h3 { letter-spacing: -.03em; }
+        .aa-eyebrow { color: var(--aa-primary); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
+        .aa-upload-zone { border: 1.5px dashed #bfdbfe; border-radius: 12px; background: #f8fbff; padding: 28px; }
+        .aa-metric { position: relative; overflow: hidden; }
+        .aa-metric::after { content: ""; position: absolute; width: 100px; height: 100px; right: -42px; top: -42px; border-radius: 50%; background: rgba(37,99,235,.06); }
+        .text-muted { color: var(--aa-muted) !important; }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                width: min(300px, 86vw);
+                transform: translateX(-100%);
+                box-shadow: 12px 0 30px rgba(15,23,42,.18);
+            }
+            .sidebar.mobile-open { transform: translateX(0); }
+            main { margin-left: 0; width: 100%; padding: 22px 16px !important; }
+            .sidebar-toggle { right: 12px; }
+            .sidebar-collapsed .sidebar { width: min(300px, 86vw); }
+            .sidebar-collapsed .sidebar > h4 { font-size: 18px; padding: 4px 42px 12px 10px; }
+            .sidebar-collapsed .sidebar nav a,
+            .sidebar-collapsed .sidebar nav .nav-link { justify-content: flex-start; padding: 10px 12px !important; font-size: 14px; }
+            .sidebar-collapsed .sidebar nav a::before,
+            .sidebar-collapsed .sidebar nav .nav-link::before { margin-right: 11px; }
+            .sidebar-collapsed .sidebar .mt-auto { padding: 16px 10px 4px !important; text-align: left; }
+            .sidebar-collapsed .sidebar .mt-auto > div { font-size: 14px !important; }
+            .sidebar-collapsed .sidebar .mt-auto .btn { font-size: 14px; padding-left: .75rem; padding-right: .75rem; }
+            .sidebar-open-button { display: grid; }
+            .sidebar-collapsed .sidebar-open-button { display: grid; }
+        }
+        @media (max-width: 575.98px) {
+            .sidebar nav { display: grid !important; grid-template-columns: 1fr; }
+            main { padding: 18px 12px !important; }
+        }
+        .sidebar-logo {
+            display: block;
+            flex: 0 0 34px;
+            width: 34px;
+            height: 34px;
+            max-width: 34px;
+            max-height: 34px;
+            object-fit: contain;
+            object-position: center;
+            border-radius: 10px;
+        }
+        :root {
+            --aa-sidebar-collapsed-width: 76px;
+            --aa-sidebar-expanded-width: 260px;
+        }
+        .aa-authenticated main {
+            margin-left: var(--aa-sidebar-collapsed-width) !important;
+            width: calc(100% - var(--aa-sidebar-collapsed-width)) !important;
+        }
+        .aa-authenticated .sidebar {
+            width: var(--aa-sidebar-collapsed-width);
+            overflow: visible;
+            z-index: 1050;
+            transition: width .2s ease;
+        }
+        .aa-authenticated .sidebar:hover,
+        .aa-authenticated .sidebar:focus-within,
+        .aa-authenticated .sidebar.aa-sidebar-expanded {
+            width: var(--aa-sidebar-expanded-width);
+        }
+        .aa-authenticated .sidebar nav a::before,
+        .aa-authenticated .sidebar nav .nav-link::before {
+            display: none !important;
+        }
+        .aa-authenticated .sidebar .sidebar-logo {
+            width: 34px !important;
+            height: 34px !important;
+            max-width: 34px !important;
+            max-height: 34px !important;
+            object-fit: contain;
+            flex: 0 0 34px;
+        }
+        .aa-authenticated .sidebar .aa-nav-icon {
+            width: 22px;
+            min-width: 22px;
+            margin-right: 10px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .aa-authenticated .sidebar .aa-nav-text {
+            white-space: nowrap;
+        }
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) .aa-nav-text {
+            display: none;
+        }
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) nav a {
+            justify-content: center;
+        }
+        .aa-authenticated .sidebar .aa-sidebar-control {
+            position: absolute;
+            top: 7px;
+            left: 48px;
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .aa-authenticated .sidebar .aa-sidebar-control .bi {
+            font-size: 12px;
+        }
+        .aa-authenticated .sidebar:hover .aa-sidebar-control,
+        .aa-authenticated .sidebar:focus-within .aa-sidebar-control,
+        .aa-authenticated .sidebar.aa-sidebar-expanded .aa-sidebar-control {
+            left: 232px;
+        }
+        .aa-authenticated .sidebar .aa-signout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .aa-authenticated .sidebar:hover .aa-signout,
+        .aa-authenticated .sidebar:focus-within .aa-signout,
+        .aa-authenticated .sidebar.aa-sidebar-expanded .aa-signout {
+            justify-content: flex-start;
+        }
+        @media (max-width: 991.98px) {
+            .aa-authenticated main {
+                margin-left: var(--aa-sidebar-collapsed-width) !important;
+                width: calc(100% - var(--aa-sidebar-collapsed-width)) !important;
+            }
+        }
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) > h4 > span,
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) .aa-workspace-label,
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) .aa-user-name {
+            display: none !important;
+        }
+
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) .aa-signout .aa-nav-text {
+            display: none !important;
+        }
+
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) .aa-signout .aa-nav-icon {
+            display: inline-block !important;
+            margin-right: 0 !important;
+        }
+
+        .aa-authenticated .sidebar:not(:hover):not(:focus-within):not(.aa-sidebar-expanded) .aa-signout {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if user.is_authenticated %}aa-authenticated{% endif %}">
+<div class="container-fluid">
+    <div class="row">
+        {% if user.is_authenticated %}
+        <aside class="sidebar d-flex flex-column" id="aa-sidebar">
+            <h4 class="fw-bold text-white"><img class="sidebar-logo" src="{% static 'audio_analytics/images/audoack-logo.png' %}" alt="AudoAck AI logo"><span>AudoAck AI</span></h4>
+            <button type="button" class="aa-sidebar-control" id="aa-sidebar-toggle" aria-label="Expand sidebar" aria-expanded="false" title="Hover to expand"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+            <nav class="nav flex-column">
+                <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Dashboard</span></a>
+                <a href="{% url 'batch_list' %}" class="{% if request.resolver_match.url_name == 'batch_list' %}active{% endif %}"><i class="bi bi-collection-play-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Batch Processing</span></a>
+                <a href="{% url 'long_recorder' %}" class="{% if request.resolver_match.url_name == 'long_recorder' %}active{% endif %}"><i class="bi bi-mic-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Live Recorder</span></a>
+                <a href="{% url 'device_tokens' %}" class="{% if request.resolver_match.url_name == 'device_tokens' %}active{% endif %}"><i class="bi bi-key-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Device Tokens</span></a>
+                <a href="{% url 'billing' %}" class="{% if request.resolver_match.url_name == 'billing' %}active{% endif %}"><i class="bi bi-credit-card-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Billing</span></a>
+            </nav>
+            <div class="mt-auto pt-3 border-top border-secondary">
+                <div class="text-light small mb-2 aa-workspace">
+                    <span class="text-secondary aa-workspace-label">Workspace</span><br>
+                    <strong class="aa-user-name">{{ user.username }}</strong>
+                </div>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Sign Out</span></button>
+                </form>
+            </div>
+        </aside>
+
+        {% endif %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+    const body = document.body;
+    const sidebar = document.getElementById('aa-sidebar');
+    const toggle = document.getElementById('aa-sidebar-toggle');
+    const open = document.getElementById('aa-sidebar-open');
+    if (!sidebar || !toggle || !open) return;
+
+    const isMobile = () => window.matchMedia('(max-width: 991.98px)').matches;
+
+    toggle.addEventListener('click', function () {
+        if (isMobile()) {
+            sidebar.classList.remove('mobile-open');
+            return;
+        }
+        body.classList.toggle('sidebar-collapsed');
+        const expanded = !body.classList.contains('sidebar-collapsed');
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.setAttribute('aria-label', expanded ? 'Collapse sidebar' : 'Expand sidebar');
+    });
+
+    open.addEventListener('click', function () {
+        sidebar.classList.add('mobile-open');
+    });
+
+    window.addEventListener('resize', function () {
+        if (!isMobile()) sidebar.classList.remove('mobile-open');
+    });
+})();
+</script>
+{% block extra_scripts %}{% endblock %}
+<script>
+/* AudoAck sidebar v8 */
+(function () {
+    "use strict";
+    function initSidebar() {
+        var sidebar=document.querySelector(".sidebar");
+        var toggle=document.getElementById("aa-sidebar-toggle");
+        if(!sidebar)return;
+        sidebar.classList.remove("aa-sidebar-expanded");
+        function sync(){
+            var expanded=sidebar.matches(":hover")||sidebar.matches(":focus-within")||sidebar.classList.contains("aa-sidebar-expanded");
+            if(toggle){
+                toggle.setAttribute("aria-expanded",expanded?"true":"false");
+                toggle.setAttribute("aria-label",expanded?"Collapse sidebar":"Expand sidebar");
+            }
+        }
+        sidebar.addEventListener("mouseenter",sync);
+        sidebar.addEventListener("mouseleave",sync);
+        sidebar.addEventListener("focusin",sync);
+        sidebar.addEventListener("focusout",function(){setTimeout(sync,0);});
+        if(toggle)toggle.addEventListener("click",function(e){
+            e.preventDefault();
+            sidebar.classList.toggle("aa-sidebar-expanded");
+            sync();
+        });
+        sync();
+    }
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initSidebar);
+    else initSidebar();
+})();
+</script>
+</body>
+</html>

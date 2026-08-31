@@ -1,0 +1,169 @@
+{% extends 'audio_analytics/base.html' %}
+{% block title %}AudoAck Privacy Policy{% endblock %}
+{% block content %}
+<style>
+  .privacy-page { background:#f8fafc; }
+  .privacy-card { border-radius:24px; }
+  .privacy-card h2 { color:#0f172a; }
+  .privacy-card p, .privacy-card li { color:#475569; line-height:1.7; }
+  .privacy-note {
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:16px;
+  }
+</style>
+
+<div class="privacy-page">
+  <div class="container py-4 py-lg-5" style="max-width:920px">
+    <div class="card border-0 shadow-sm privacy-card">
+      <div class="card-body p-4 p-lg-5">
+
+        <div class="mb-4">
+          <span class="badge text-bg-primary mb-3">AudoAck</span>
+          <h1 class="fw-bold mb-2">Privacy Policy</h1>
+          <p class="text-muted mb-0">Last updated: August 21, 2026</p>
+        </div>
+
+        <div class="privacy-note p-3 p-md-4 mb-4">
+          <strong>In short:</strong>
+          AudoAck handles account information, device/session information,
+          audio recordings submitted for analysis, and analysis results.
+          Audio is used to provide the recording and analysis features.
+        </div>
+
+        <h2 class="h4 mt-4">1. About AudoAck</h2>
+        <p>
+          AudoAck is an Android application and related web service for recording,
+          submitting, and reviewing audio analysis results. This policy explains
+          what information AudoAck handles, how it is used, how it may be shared,
+          and how you can request deletion.
+        </p>
+
+        <h2 class="h4 mt-4">2. Information we handle</h2>
+        <ul>
+          <li>
+            <strong>Account information:</strong>
+            username and authentication information required to sign in.
+          </li>
+          <li>
+            <strong>Device and session information:</strong>
+            device identifiers, device tokens, session and batch identifiers,
+            timestamps, and last-seen information used to associate activity
+            with an authenticated account and device.
+          </li>
+          <li>
+            <strong>Audio:</strong>
+            audio recordings or audio chunks that you explicitly record or
+            submit for analysis.
+          </li>
+          <li>
+            <strong>Analysis results:</strong>
+            derived information such as emotional tone, intensity,
+            background-noise indicators, audio quality, speaker-overlap
+            indicators, silence indicators, and confidence values.
+          </li>
+        </ul>
+
+        <h2 class="h4 mt-4">3. Microphone and audio recording</h2>
+        <p>
+          The Android application requests microphone access because recording
+          audio is a core feature. Before recording, the app should explain why
+          microphone access is needed and request the Android microphone permission.
+          Audio captured for an active recording session is transmitted to the
+          AudoAck service when it is submitted for analysis.
+        </p>
+        <p>
+          Do not record people or conversations unless you have the right,
+          permission, or other lawful basis to do so.
+        </p>
+
+        <h2 class="h4 mt-4">4. How information is used</h2>
+        <ul>
+          <li>Authenticate users and maintain signed-in sessions.</li>
+          <li>Associate recordings with devices, sessions, and batches.</li>
+          <li>Receive and process submitted audio.</li>
+          <li>Generate and display audio analysis results.</li>
+          <li>Display the latest available results for connected devices.</li>
+          <li>Maintain, secure, troubleshoot, and operate the service.</li>
+        </ul>
+
+        <h2 class="h4 mt-4">5. Sharing and service providers</h2>
+        <p>
+          AudoAck does not sell personal information. Information may be processed
+          by infrastructure, hosting, storage, security, and other service providers
+          that are necessary to operate the application. Such processing is limited
+          to the purposes required to provide and maintain the service and is
+          subject to applicable contractual and security controls.
+        </p>
+
+        <h2 class="h4 mt-4">6. Retention</h2>
+        <p>
+          Recordings, account information, device information, and analysis data
+          may be retained for as long as reasonably necessary to provide the service,
+          maintain associated records, comply with applicable obligations, and
+          resolve support or security issues.
+        </p>
+
+        <h2 class="h4 mt-4">7. Data deletion requests</h2>
+        <p>
+          You may request deletion of your AudoAck account and associated personal
+          information by contacting the service owner through the contact details
+          provided on the Google Play listing or the AudoAck service website.
+          We may need to verify the request before processing it.
+        </p>
+        <p>
+          Some information may need to be retained where required by law or where
+          reasonably necessary for security, fraud prevention, dispute resolution,
+          or other legitimate operational purposes.
+        </p>
+
+        <h2 class="h4 mt-4">8. Security</h2>
+        <p>
+          AudoAck uses reasonable technical and organizational measures to protect
+          information against unauthorized access, loss, misuse, or disclosure.
+          Data transmitted between the application and the service is intended to
+          use encrypted HTTPS connections. No internet-based service can guarantee
+          absolute security.
+        </p>
+
+        <h2 class="h4 mt-4">9. Children's privacy</h2>
+        <p>
+          AudoAck is not directed to children under 13. We do not knowingly collect
+          personal information from children under 13. If you believe a child has
+          provided personal information to the service, contact the service owner
+          so the information can be reviewed and, where appropriate, deleted.
+        </p>
+
+        <h2 class="h4 mt-4">10. Your responsibilities when recording audio</h2>
+        <p>
+          You are responsible for ensuring that your use of AudoAck complies with
+          applicable privacy, recording, employment, and consent laws. Do not use
+          the application to secretly record or unlawfully collect another person's
+          private communications.
+        </p>
+
+        <h2 class="h4 mt-4">11. Changes to this policy</h2>
+        <p>
+          This policy may be updated when AudoAck's features, data practices, or
+          legal requirements change. The current version will be published on this
+          page with its updated date.
+        </p>
+
+        <h2 class="h4 mt-4">12. Contact</h2>
+        <p>
+          For privacy questions, account-related privacy requests, or deletion
+          requests, use the contact information published with the AudoAck
+          application on Google Play or on the AudoAck service website.
+        </p>
+
+        <hr class="my-4">
+
+        <a href="{% url 'home' %}" class="text-decoration-none">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to AudoAck
+        </a>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

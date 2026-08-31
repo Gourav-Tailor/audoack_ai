@@ -1,0 +1,217 @@
+{% extends 'audio_analytics/base.html' %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 700px;">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">🎙️ Extended Voice Session Recorder</h5>
+      <span class="badge bg-success">API v1</span>
+    </div>
+    <div class="card-body text-center p-4">
+      <p class="text-muted">
+        Record for minutes or hours. Audio is uploaded in configurable intervals,
+        always using a multiple of 5 seconds.
+      </p>
+
+      <div class="mb-3 text-start">
+        <label class="form-label fw-bold">Session Title</label>
+        <input type="text" id="sessionTitle" class="form-control" value="Meeting Recording">
+      </div>
+
+      <div class="mb-3 text-start">
+        <label class="form-label fw-bold">Chunk interval</label>
+        <select id="chunkInterval" class="form-select">
+          <option value="5">5 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="15">15 seconds</option>
+          <option value="20">20 seconds</option>
+          <option value="30" selected>30 seconds</option>
+          <option value="60">60 seconds</option>
+        </select>
+        <div class="form-text">Each upload contains this many seconds of audio.</div>
+      </div>
+
+      <div class="my-4">
+        <div id="recordingTimer" class="display-4 fw-bold text-primary mb-3">00:00:00</div>
+        <div id="chunkCounter" class="text-muted mb-3">Chunks uploaded: 0</div>
+        <button id="startRecBtn" class="btn btn-danger btn-lg px-4 rounded-pill">🔴 Start Recording</button>
+        <button id="stopRecBtn" class="btn btn-secondary btn-lg px-4 rounded-pill d-none">⏹️ Stop & Finish</button>
+      </div>
+
+      <div id="processingAlert" class="alert alert-info d-none" role="alert">
+        <div class="spinner-border spinner-border-sm me-2"></div>
+        Finishing queued audio chunks...
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let mediaRecorder = null;
+let recorderStopPromise = null;
+let recordingLoop = null;
+let recordingStopped = false;
+let mediaStream = null;
+let activeBatchId = null;
+let chunkIndex = 0;
+let uploadQueue = Promise.resolve();
+let stoppedPromise = Promise.resolve();
+let timerInterval = null;
+let startTime = 0;
+
+const $ = id => document.getElementById(id);
+const startBtn = $('startRecBtn');
+const stopBtn = $('stopRecBtn');
+const timer = $('recordingTimer');
+const counter = $('chunkCounter');
+const processing = $('processingAlert');
+const intervalSelect = $('chunkInterval');
+
+function csrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+async function postForm(url, formData) {
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+    headers: {
+      'X-CSRFToken': csrfToken(),
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+
+  return data;
+}
+
+async function recordInterval(intervalMs) {
+  if (recordingStopped || !activeBatchId) return;
+
+  const mimeTypes = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+  ];
+  const mimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
+  if (!mimeType) throw new Error('No supported audio recording format found.');
+
+  const recorder = new MediaRecorder(mediaStream, { mimeType });
+  mediaRecorder = recorder;
+  const index = chunkIndex++;
+  let chunks = [];
+
+  recorderStopPromise = new Promise((resolve, reject) => {
+    recorder.addEventListener('dataavailable', e => {
+      if (e.data?.size) chunks.push(e.data);
+    });
+    recorder.addEventListener('error', e => reject(e.error || new Error('MediaRecorder error')));
+    recorder.addEventListener('stop', async () => {
+      try {
+        const blob = new Blob(chunks, { type: mimeType });
+        if (!blob.size) return resolve();
+
+        const form = new FormData();
+        form.append('index', String(index));
+        form.append('chunk_data', blob, `chunk_${index}.${mimeType.includes('ogg') ? 'ogg' : 'webm'}`);
+        await postForm(`/api/v1/sessions/${activeBatchId}/chunks/`, form);
+        counter.textContent = `Chunks uploaded: ${index + 1}`;
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+
+  recorder.start();
+  await new Promise(resolve => setTimeout(resolve, intervalMs));
+
+  if (recorder.state !== 'inactive') recorder.stop();
+  await recorderStopPromise;
+}
+
+async function recordingLoopRunner(intervalMs) {
+  while (!recordingStopped && activeBatchId) {
+    await recordInterval(intervalMs);
+  }
+}
+
+startBtn.addEventListener('click', async () => {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const init = new FormData();
+    init.append('title', $('sessionTitle').value.trim() || 'Long Live Recording');
+    const data = await postForm('{% url "api_v1_session_init" %}', init);
+
+    activeBatchId = data.batch_id;
+    chunkIndex = 0;
+    recordingStopped = false;
+
+    startBtn.classList.add('d-none');
+    stopBtn.classList.remove('d-none');
+    intervalSelect.disabled = true;
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+
+    recordingLoop = recordingLoopRunner(Number(intervalSelect.value) * 1000);
+    recordingLoop.catch(error => {
+      console.error('Recording loop failed', error);
+      alert(`Recording error: ${error.message}`);
+      stopBtn.click();
+    });
+  } catch (error) {
+    mediaStream?.getTracks().forEach(track => track.stop());
+    mediaStream = null;
+    activeBatchId = null;
+    alert(`Session error: ${error.message}`);
+  }
+});
+
+stopBtn.addEventListener('click', async () => {
+  if (!activeBatchId || recordingStopped) return;
+
+  recordingStopped = true;
+  stopBtn.disabled = true;
+  processing.classList.remove('d-none');
+  clearInterval(timerInterval);
+
+  try {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    if (recorderStopPromise) await recorderStopPromise;
+    if (recordingLoop) await recordingLoop;
+
+    await postForm(`/api/v1/sessions/${activeBatchId}/finalize/`, new FormData());
+    window.location.href = `/batches/${activeBatchId}/`;
+  } catch (error) {
+    processing.classList.add('d-none');
+    stopBtn.disabled = false;
+    recordingStopped = false;
+    alert(`Recording could not be finalized: ${error.message}`);
+  } finally {
+    mediaStream?.getTracks().forEach(track => track.stop());
+    mediaStream = null;
+    mediaRecorder = null;
+    recorderStopPromise = null;
+    recordingLoop = null;
+    activeBatchId = null;
+    intervalSelect.disabled = false;
+  }
+});
+
+function updateTimer() {
+  const seconds = Math.floor((Date.now() - startTime) / 1000);
+  const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+  const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  timer.textContent = `${h}:${m}:${s}`;
+}
+</script>
+{% csrf_token %}
+{% endblock %}
