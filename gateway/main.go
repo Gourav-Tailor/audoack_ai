@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -747,7 +748,7 @@ func envInt(key string, fallback int) int {
 }
 
 func clientIP(r *http.Request) string {
-	host, _, err := strings.Cut(r.RemoteAddr, ":")
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err == nil {
 		return host
 	}
