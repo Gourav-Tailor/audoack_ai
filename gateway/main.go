@@ -146,8 +146,6 @@ func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) sessionRouter(w http.ResponseWriter, r *http.Request) {
-	// Browser long-recorder uses Django session authentication. Keep those
-	// requests on the canonical Django api_v1 implementation.
 	if !hasDeviceToken(r) {
 		s.proxyToDjango(w, r)
 		return
@@ -321,8 +319,6 @@ func (s *Server) uploadChunk(w http.ResponseWriter, r *http.Request, batchID int
 		return
 	}
 
-	// Convert directly into the shared /tmp volume. No audio bytes are sent
-	// through Redis or PostgreSQL.
 	dir := filepath.Join(tempRoot, fmt.Sprintf("batch_stream_%d", batchID))
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create audio workspace")
@@ -361,7 +357,6 @@ func (s *Server) uploadChunk(w http.ResponseWriter, r *http.Request, batchID int
 	}
 	defer tx.Rollback(ctx)
 
-	// Lock the batch so two concurrent uploads cannot reserve the same index.
 	var lockedStatus string
 	if err := tx.QueryRow(ctx,
 		`SELECT status FROM audio_analytics_batchupload WHERE id = $1 AND user_id = $2 AND device_id = $3 FOR UPDATE`,
@@ -409,8 +404,6 @@ func (s *Server) uploadChunk(w http.ResponseWriter, r *http.Request, batchID int
 	if err := s.enqueueCeleryTask(r.Context(), "audio_analytics.tasks.process_audio_chunk_task",
 		[]any{batchID, wavPath, filename}); err != nil {
 		log.Printf("celery enqueue failed batch=%d index=%d: %v", batchID, index, err)
-		// Keep the file and pending DB row. A later operational retry can
-		// safely enqueue the task without losing the only audio copy.
 		writeError(w, http.StatusServiceUnavailable, "audio queued locally but worker queue is unavailable")
 		return
 	}

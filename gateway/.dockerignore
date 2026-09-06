@@ -1,4 +1,2 @@
-*.log
+gateway.exe
 .git
-.gitignore
-README.md

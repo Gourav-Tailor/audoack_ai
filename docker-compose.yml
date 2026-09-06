@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ${POSTGRES_VOLUME:-autoace_ai_postgres_data}:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
@@ -42,7 +42,7 @@ services:
       MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
       MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-*}
     volumes:
-      - ${MINIO_VOLUME:-autoace_ai_minio_data}:/data
+      - minio_data:/data
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live >/dev/null || exit 1"]
       interval: 5s
@@ -77,14 +77,10 @@ services:
     container_name: audoack_django
     restart: unless-stopped
     command: >
-      sh -c "python manage.py wait_for_db &&
+      sh -c 'python manage.py wait_for_db &&
              python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn audoack_ai.wsgi:application
-             --bind 0.0.0.0:8000
-             --workers $${DJANGO_WORKERS:-3}
-             --timeout 300
-             --access-logfile -"
+             exec gunicorn audoack_ai.wsgi:application --bind 0.0.0.0:8000 --workers ${DJANGO_WORKERS:-3} --timeout 300 --access-logfile -'
     volumes:
       - static_data:/app/staticfiles
       - upload_tmp:/tmp
@@ -102,7 +98,6 @@ services:
         - >-
           python -c "import urllib.request;
           urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3)"
-
       interval: 15s
       timeout: 5s
       retries: 5
@@ -185,6 +180,8 @@ services:
         condition: service_healthy
 
 volumes:
+  postgres_data:
+  minio_data:
   redis_data:
   static_data:
   hf_cache:

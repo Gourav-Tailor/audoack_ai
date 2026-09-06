@@ -4,7 +4,6 @@ FROM python:3.10-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies required for librosa, psycopg2, and soundfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
