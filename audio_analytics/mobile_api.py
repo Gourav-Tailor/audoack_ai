@@ -145,6 +145,11 @@ class MobileDeviceLatestAnalysisView(APIView):
 
 def _serialize_device(device, include_key=False):
     data = {
+        "audio_playback_url": (
+            analysis.audio_file.url
+            if getattr(analysis, "audio_file", None) and analysis.audio_file
+            else None
+        ),
         "id": device.id,
         "name": device.name,
         "last_seen": device.last_seen.isoformat() if device.last_seen else None,
@@ -159,6 +164,11 @@ def _serialize_device(device, include_key=False):
 
 def _serialize_analysis(analysis):
     data = {
+        "audio_playback_url": (
+            analysis.audio_file.url
+            if getattr(analysis, "audio_file", None) and analysis.audio_file
+            else None
+        ),
         "id": analysis.id,
         "batch_id": analysis.batch_id,
         "filename": analysis.filename,

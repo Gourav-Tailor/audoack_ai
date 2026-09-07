@@ -7,8 +7,30 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
+DEVICE_TOKEN_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
+
+
 def generate_device_key():
-    return secrets.token_hex(20)
+    while True:
+        token = "-".join(
+            (
+                "".join(
+                    secrets.choice(DEVICE_TOKEN_ALPHABET)
+                    for _ in range(3)
+                ),
+                "".join(
+                    secrets.choice(DEVICE_TOKEN_ALPHABET)
+                    for _ in range(4)
+                ),
+                "".join(
+                    secrets.choice(DEVICE_TOKEN_ALPHABET)
+                    for _ in range(3)
+                ),
+            )
+        )
+
+        if not Device.objects.filter(key=token).exists():
+            return token
 
 
 class Device(models.Model):
