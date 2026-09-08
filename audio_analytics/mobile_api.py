@@ -27,20 +27,34 @@ class MobileLoginView(APIView):
 
         if not username or not password:
             return Response(
-                {"success": False, "error": "Username and password are required."},
+                {
+                    "success": False,
+                    "error": "Username and password are required.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = authenticate(request=request, username=username, password=password)
+        user = authenticate(
+            request=request,
+            username=username,
+            password=password,
+        )
+
         if user is None:
             return Response(
-                {"success": False, "error": "Invalid username or password."},
+                {
+                    "success": False,
+                    "error": "Invalid username or password.",
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if not user.is_active:
             return Response(
-                {"success": False, "error": "User account is inactive."},
+                {
+                    "success": False,
+                    "error": "User account is inactive.",
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -53,7 +67,8 @@ class MobileLoginView(APIView):
                 "success": True,
                 "token": auth_token.token,
                 "devices": [
-                    _serialize_device(device, include_key=False) for device in devices
+                    _serialize_device(device, include_key=False)
+                    for device in devices
                 ],
             },
             status=status.HTTP_200_OK,
@@ -86,7 +101,8 @@ class MobileDevicesView(APIView):
         return Response(
             {
                 "devices": [
-                    _serialize_device(device, include_key=False) for device in devices
+                    _serialize_device(device, include_key=False)
+                    for device in devices
                 ]
             }
         )
@@ -137,22 +153,32 @@ class MobileDeviceLatestAnalysisView(APIView):
                 "device": _serialize_device(device, include_key=False),
                 "batch_id": batch.id,
                 "batch_status": batch.status,
-                "latestAnalysis": (_serialize_analysis(analysis) if analysis else None),
+                "latestAnalysis": (
+                    _serialize_analysis(analysis)
+                    if analysis
+                    else None
+                ),
             },
             status=status.HTTP_200_OK,
         )
 
 
 def _serialize_device(device, include_key=False):
+    """
+    Serialize device metadata only.
+
+    Audio playback belongs to an AudioAnalysis record, not a Device.
+    Keeping this serializer independent prevents login/device-list requests
+    from failing when no analysis object exists.
+    """
     data = {
-        "audio_playback_url": (
-            analysis.audio_file.url
-            if getattr(analysis, "audio_file", None) and analysis.audio_file
-            else None
-        ),
         "id": device.id,
         "name": device.name,
-        "last_seen": device.last_seen.isoformat() if device.last_seen else None,
+        "last_seen": (
+            device.last_seen.isoformat()
+            if device.last_seen
+            else None
+        ),
         "created_at": device.created_at.isoformat(),
     }
 
@@ -166,7 +192,8 @@ def _serialize_analysis(analysis):
     data = {
         "audio_playback_url": (
             analysis.audio_file.url
-            if getattr(analysis, "audio_file", None) and analysis.audio_file
+            if getattr(analysis, "audio_file", None)
+            and analysis.audio_file
             else None
         ),
         "id": analysis.id,
@@ -193,6 +220,7 @@ def _serialize_analysis(analysis):
     ):
         if hasattr(analysis, field):
             value = getattr(analysis, field)
+
             if (
                 field
                 in {
@@ -205,6 +233,7 @@ def _serialize_analysis(analysis):
                 value = bool(value)
             elif field == "confidence" and value is not None:
                 value = float(value)
+
             data[field] = value
 
     return data
