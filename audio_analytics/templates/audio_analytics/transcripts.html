@@ -1,0 +1,155 @@
+{% extends "audio_analytics/base.html" %}
+
+{% block title %}Transcripts - AudoAck AI{% endblock %}
+
+{% block content %}
+<div class="aa-page-header d-flex flex-wrap align-items-end justify-content-between gap-3">
+    <div>
+        <div class="aa-eyebrow">Speech to Text</div>
+        <h1 class="h3 mb-1">Transcripts</h1>
+        <p class="text-muted mb-0">Browse audio transcripts grouped by recording batch.</p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label for="batch" class="form-label fw-semibold">Recording Batch</label>
+                <select name="batch" id="batch" class="form-select" onchange="this.form.submit()">
+                    <option value="">All batches</option>
+                    {% for batch in batches %}
+                        <option value="{{ batch.id }}" {% if selected_batch_id == batch.id %}selected{% endif %}>
+                            Batch #{{ batch.id }} — {{ batch.name|default:"Live Recording" }} — {{ batch.uploaded_at|date:"d M Y, H:i" }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                {% if selected_batch_id %}
+                    <a href="{% url 'transcripts' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if transcripts %}
+    <div class="vstack gap-3">
+        {% for analysis in transcripts %}
+            <article class="card transcript-card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+                        <div>
+                            <div class="fw-bold">{{ analysis.filename }}</div>
+                            <div class="small text-muted">
+                                Batch #{{ analysis.batch_id }}
+                                {% if analysis.batch.device %} · {{ analysis.batch.device.name }}{% endif %}
+                                · {{ analysis.created_at|date:"d M Y, H:i:s" }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if analysis.transcription_language %}
+                                <span class="badge text-bg-light border">{{ analysis.transcription_language }}</span>
+                            {% endif %}
+                            {% if analysis.transcription_confidence is not None %}
+                                <span class="badge text-bg-light border">
+                                    {{ analysis.transcription_confidence|floatformat:0 }}% confidence
+                                </span>
+                            {% endif %}
+                            {% if analysis.audio_file %}
+                                <a href="{{ analysis.audio_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">
+                                    <i class="bi bi-play-fill"></i> Audio
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="transcript-text">{{ analysis.transcript }}</div>
+
+                    {% if analysis.transcript_segments %}
+                        <details class="mt-3">
+                            <summary class="small text-primary">Show timestamped segments</summary>
+                            <div class="mt-3 vstack gap-2">
+                                {% for segment in analysis.transcript_segments %}
+                                    <div class="segment-row">
+                                        <span class="segment-time">{{ segment.start }}s – {{ segment.end }}s</span>
+                                        <span>{{ segment.text }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4" aria-label="Transcript pages">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if selected_batch_id %}batch={{ selected_batch_id }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if selected_batch_id %}batch={{ selected_batch_id }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-chat-left-text fs-1 text-muted"></i>
+            <h2 class="h5 mt-3">No transcripts available</h2>
+            <p class="text-muted mb-0">Transcripts will appear here after audio chunks are processed.</p>
+        </div>
+    </div>
+{% endif %}
+
+<style>
+.transcript-card {
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.transcript-card:hover {
+    transform: translateY(-1px);
+}
+.transcript-text {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    font-size: 15px;
+    color: #1e293b;
+}
+.segment-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--aa-border);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+.segment-time {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--aa-primary);
+}
+@media (max-width: 575.98px) {
+    .segment-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+}
+</style>
+{% endblock %}

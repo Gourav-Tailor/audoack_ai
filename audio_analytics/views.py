@@ -319,3 +319,44 @@ class ExportBatchResultsView(LoginRequiredMixin, View):
             writer.writerow([analysis.filename, result_payload])
 
         return response
+
+
+class TranscriptsView(LoginRequiredMixin, TemplateView):
+    template_name = "audio_analytics/transcripts.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.request.user.is_superuser:
+            batches = BatchUpload.objects.all()
+            analyses = AudioAnalysis.objects.all()
+        else:
+            batches = BatchUpload.objects.filter(user=self.request.user)
+            analyses = AudioAnalysis.objects.filter(batch__user=self.request.user)
+
+        batch_id = self.request.GET.get("batch")
+        if batch_id:
+            try:
+                selected_batch_id = int(batch_id)
+                analyses = analyses.filter(batch_id=selected_batch_id)
+            except (TypeError, ValueError):
+                selected_batch_id = None
+        else:
+            selected_batch_id = None
+
+        analyses = (
+            analyses.exclude(transcript__isnull=True)
+            .exclude(transcript="")
+            .select_related("batch", "batch__device")
+            .order_by("-batch__uploaded_at", "-id")
+        )
+
+        paginator = Paginator(analyses, 50)
+        page_obj = paginator.get_page(self.request.GET.get("page", 1))
+
+        context["batches"] = batches.order_by("-uploaded_at", "-id")
+        context["selected_batch_id"] = selected_batch_id
+        context["page_obj"] = page_obj
+        context["transcripts"] = page_obj.object_list
+        return context
+

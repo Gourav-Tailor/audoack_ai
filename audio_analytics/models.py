@@ -14,33 +14,19 @@ def generate_device_key():
     while True:
         token = "-".join(
             (
-                "".join(
-                    secrets.choice(DEVICE_TOKEN_ALPHABET)
-                    for _ in range(3)
-                ),
-                "".join(
-                    secrets.choice(DEVICE_TOKEN_ALPHABET)
-                    for _ in range(4)
-                ),
-                "".join(
-                    secrets.choice(DEVICE_TOKEN_ALPHABET)
-                    for _ in range(3)
-                ),
+                "".join(secrets.choice(DEVICE_TOKEN_ALPHABET) for _ in range(3)),
+                "".join(secrets.choice(DEVICE_TOKEN_ALPHABET) for _ in range(4)),
+                "".join(secrets.choice(DEVICE_TOKEN_ALPHABET) for _ in range(3)),
             )
         )
-
         if not Device.objects.filter(key=token).exists():
             return token
 
 
 class Device(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="devices"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="devices")
     name = models.CharField(max_length=100)
-    key = models.CharField(
-        max_length=64, unique=True, default=generate_device_key, editable=False
-    )
+    key = models.CharField(max_length=64, unique=True, default=generate_device_key, editable=False)
     last_seen = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -55,20 +41,14 @@ class BatchUpload(models.Model):
         COMPLETED = "completed", "Completed"
         FAILED = "failed", "Failed"
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="batches", null=True, blank=True
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="batches", null=True, blank=True)
     zip_file = models.FileField(upload_to="batches/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.PENDING
-    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     error_message = models.TextField(blank=True, null=True)
     metrics_json = models.TextField(blank=True, null=True)
     name = models.CharField(max_length=255, default="Live Recording")
-    device = models.ForeignKey(
-        Device, null=True, blank=True, on_delete=models.SET_NULL, related_name="batches"
-    )
+    device = models.ForeignKey(Device, null=True, blank=True, on_delete=models.SET_NULL, related_name="batches")
 
     def get_metrics(self):
         if self.metrics_json:
@@ -111,44 +91,27 @@ class AudioAnalysis(models.Model):
         SUCCESS = "success", "Success"
         FAILED = "failed", "Failed"
 
-    batch = models.ForeignKey(
-        BatchUpload,
-        related_name="analyses",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
+    batch = models.ForeignKey(BatchUpload, related_name="analyses", on_delete=models.CASCADE, null=True, blank=True)
     filename = models.CharField(max_length=255)
     audio_file = models.FileField(upload_to="audio_clips/", blank=True, null=True)
-    status = models.CharField(
-        max_length=20,
-        choices=ProcessingStatus.choices,
-        default=ProcessingStatus.PENDING,
-    )
+    status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
     error_details = models.TextField(blank=True, default="")
-    emotional_tone = models.CharField(
-        max_length=20, choices=EmotionalTone.choices, blank=True, null=True
-    )
-    emotional_intensity = models.CharField(
-        max_length=10, choices=EmotionalIntensity.choices, blank=True, null=True
-    )
+    emotional_tone = models.CharField(max_length=20, choices=EmotionalTone.choices, blank=True, null=True)
+    emotional_intensity = models.CharField(max_length=10, choices=EmotionalIntensity.choices, blank=True, null=True)
     background_noise_present = models.BooleanField(default=False)
     background_noise_type = models.CharField(max_length=255, blank=True, default="")
-    background_noise_severity = models.CharField(
-        max_length=10,
-        choices=BackgroundNoiseSeverity.choices,
-        default=BackgroundNoiseSeverity.NONE,
-    )
-    audio_quality = models.CharField(
-        max_length=20, choices=AudioQuality.choices, blank=True, null=True
-    )
+    background_noise_severity = models.CharField(max_length=10, choices=BackgroundNoiseSeverity.choices, default=BackgroundNoiseSeverity.NONE)
+    audio_quality = models.CharField(max_length=20, choices=AudioQuality.choices, blank=True, null=True)
     speaker_overlap_present = models.BooleanField(default=False)
     long_silence_present = models.BooleanField(default=False)
-    confidence = models.FloatField(
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
-        null=True,
-        blank=True,
-    )
+    confidence = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(1.0)], null=True, blank=True)
+
+    # Local faster-whisper transcription fields.
+    transcript = models.TextField(blank=True, default="")
+    transcription_language = models.CharField(max_length=20, blank=True, default="")
+    transcription_confidence = models.FloatField(null=True, blank=True)
+    transcript_segments = models.JSONField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def to_dict(self):
@@ -161,9 +124,11 @@ class AudioAnalysis(models.Model):
             "audio_quality": self.audio_quality,
             "speaker_overlap_present": self.speaker_overlap_present,
             "long_silence_present": self.long_silence_present,
-            "confidence": (
-                round(self.confidence, 2) if self.confidence is not None else None
-            ),
+            "confidence": round(self.confidence, 2) if self.confidence is not None else None,
+            "transcript": self.transcript,
+            "transcription_language": self.transcription_language,
+            "transcription_confidence": self.transcription_confidence,
+            "transcript_segments": self.transcript_segments,
         }
 
     def __str__(self):
@@ -171,11 +136,7 @@ class AudioAnalysis(models.Model):
 
 
 class MobileAuthToken(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="mobile_auth_tokens",
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mobile_auth_tokens")
     token = models.CharField(max_length=64, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     last_used_at = models.DateTimeField(null=True, blank=True)
@@ -183,10 +144,7 @@ class MobileAuthToken(models.Model):
     revoked = models.BooleanField(default=False)
 
     class Meta:
-        indexes = [
-            models.Index(fields=["token", "revoked"]),
-            models.Index(fields=["user", "revoked"]),
-        ]
+        indexes = [models.Index(fields=["token", "revoked"]), models.Index(fields=["user", "revoked"])]
 
     @classmethod
     def issue(cls, user):
@@ -202,29 +160,19 @@ class Payment(models.Model):
         PAID = "paid", "Paid"
         FAILED = "failed", "Failed"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="billing_payments",
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="billing_payments")
     billing_month = models.DateField()
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=3, default="INR")
     idempotency_key = models.CharField(max_length=64, unique=True, editable=False)
     razorpay_order_id = models.CharField(max_length=100, unique=True)
-    razorpay_payment_id = models.CharField(
-        max_length=100, unique=True, null=True, blank=True
-    )
-    status = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.CREATED
-    )
+    razorpay_payment_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CREATED)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        indexes = [
-            models.Index(fields=["user", "billing_month", "status"]),
-        ]
+        indexes = [models.Index(fields=["user", "billing_month", "status"])]
 
     def __str__(self):
         return f"{self.user.username} {self.billing_month:%Y-%m} {self.amount} {self.status}"

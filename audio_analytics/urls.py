@@ -31,9 +31,11 @@ from .views import (
     DashboardView,
     ExportBatchResultsView,
     SignUpView,
+    TranscriptsView,
 )
 
 urlpatterns = [
+    path("transcripts/", TranscriptsView.as_view(), name="transcripts"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("billing/", BillingView.as_view(), name="billing"),
     path(
@@ -116,3 +118,4 @@ urlpatterns = [
         name="mobile_device_latest_analysis",
     ),
 ]
+

@@ -360,6 +360,13 @@
                 <a href="{% url 'long_recorder' %}" class="{% if request.resolver_match.url_name == 'long_recorder' %}active{% endif %}"><i class="bi bi-mic-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Live Recorder</span></a>
                 <a href="{% url 'device_tokens' %}" class="{% if request.resolver_match.url_name == 'device_tokens' %}active{% endif %}"><i class="bi bi-key-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Device Tokens</span></a>
                 <a href="{% url 'billing' %}" class="{% if request.resolver_match.url_name == 'billing' %}active{% endif %}"><i class="bi bi-credit-card-fill aa-nav-icon" aria-hidden="true"></i><span class="aa-nav-text">Billing</span></a>
+            
+<!-- Add this directly after the Batch Processing navigation link in base.html -->
+<a href="{% url 'transcripts' %}" class="{% if request.resolver_match.url_name == 'transcripts' %}active{% endif %}">
+    <i class="bi bi-chat-left-text-fill aa-nav-icon" aria-hidden="true"></i>
+    <span class="aa-nav-text">Transcripts</span>
+</a>
+
             </nav>
             <div class="mt-auto pt-3 border-top border-secondary">
                 <div class="text-light small mb-2 aa-workspace">
@@ -444,3 +451,4 @@
 </script>
 </body>
 </html>
+
