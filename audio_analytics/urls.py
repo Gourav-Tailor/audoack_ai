@@ -20,6 +20,7 @@ from .billing_payments import (
 from .billing_views import BillingView
 from .mobile_api import (
     MobileDeviceLatestAnalysisView,
+    MobileDeviceTranscriptsView,
     MobileDevicesView,
     MobileLoginView,
     MobileLogoutView,
@@ -117,5 +118,9 @@ urlpatterns = [
         MobileDeviceLatestAnalysisView.as_view(),
         name="mobile_device_latest_analysis",
     ),
+    path(
+        "api/v1/mobile/devices/<int:device_id>/transcripts/",
+        MobileDeviceTranscriptsView.as_view(),
+        name="mobile_device_transcripts",
+    ),
 ]
-

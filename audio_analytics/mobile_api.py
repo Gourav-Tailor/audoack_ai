@@ -59,7 +59,6 @@ class MobileLoginView(APIView):
             )
 
         auth_token = MobileAuthToken.issue(user)
-
         devices = Device.objects.filter(user=user).order_by("-created_at")
 
         return Response(
@@ -163,6 +162,94 @@ class MobileDeviceLatestAnalysisView(APIView):
         )
 
 
+class MobileDeviceTranscriptsView(APIView):
+    """
+    Incremental transcript feed for the mobile device-detail screen.
+
+    The client sends the last AudioAnalysis id it has rendered:
+        GET .../transcripts/?after_id=123
+
+    Only successful analyses for the device's latest recording session are
+    returned, ordered oldest-to-newest. This makes the response append-only
+    and prevents the mobile app from repeatedly downloading the whole feed.
+    """
+
+    authentication_classes = [MobileBearerAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    PAGE_SIZE = 100
+
+    def get(self, request, device_id):
+        device = Device.objects.filter(
+            id=device_id,
+            user=request.user,
+        ).first()
+
+        if device is None:
+            return Response(
+                {"detail": "Device not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            after_id = int(request.query_params.get("after_id", "0"))
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "after_id must be a non-negative integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if after_id < 0:
+            return Response(
+                {"detail": "after_id must be a non-negative integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        batch = device.batches.order_by("-id").first()
+        if batch is None:
+            return Response(
+                {
+                    "status": "no_recording",
+                    "device_id": device.id,
+                    "batch_id": None,
+                    "batch_status": None,
+                    "items": [],
+                    "latest_id": after_id,
+                    "has_more": False,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        queryset = (
+            AudioAnalysis.objects.filter(
+                batch=batch,
+                status=AudioAnalysis.ProcessingStatus.SUCCESS,
+                id__gt=after_id,
+            )
+            .order_by("id")
+        )
+
+        rows = list(queryset[: self.PAGE_SIZE + 1])
+        has_more = len(rows) > self.PAGE_SIZE
+        rows = rows[: self.PAGE_SIZE]
+
+        items = [_serialize_transcript(analysis) for analysis in rows]
+        latest_id = rows[-1].id if rows else after_id
+
+        return Response(
+            {
+                "status": "success",
+                "device_id": device.id,
+                "batch_id": batch.id,
+                "batch_status": batch.status,
+                "items": items,
+                "latest_id": latest_id,
+                "has_more": has_more,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 def _serialize_device(device, include_key=False):
     """
     Serialize device metadata only.
@@ -237,3 +324,24 @@ def _serialize_analysis(analysis):
             data[field] = value
 
     return data
+
+
+def _serialize_transcript(analysis):
+    return {
+        "id": analysis.id,
+        "batch_id": analysis.batch_id,
+        "filename": analysis.filename,
+        "transcript": analysis.transcript or "",
+        "language": analysis.transcription_language or "",
+        "confidence": (
+            float(analysis.transcription_confidence)
+            if analysis.transcription_confidence is not None
+            else None
+        ),
+        "segments": analysis.transcript_segments or [],
+        "created_at": (
+            analysis.created_at.isoformat()
+            if analysis.created_at
+            else None
+        ),
+    }
