@@ -1,19 +1,103 @@
 {% extends "audio_analytics/base.html" %}
 {% block title %}Records | AudoAck AI{% endblock %}
 {% block content %}
-<div class="aa-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
-  <div><div class="text-primary text-uppercase small fw-bold">Recording history</div><h1 class="mb-1">Records</h1><p class="text-muted mb-0">See who recorded, when they recorded, and the conversations captured.</p></div>
-  <form method="get" class="d-flex align-items-end gap-2">
-    <div><label class="form-label small fw-semibold mb-1">Emotional tone</label><select name="tone" class="form-select" onchange="this.form.submit()"><option value="">All tones</option>{% for value,label in tone_choices %}<option value="{{ value }}" {% if selected_tone == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-    {% if selected_tone %}<a href="{% url 'records' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}
-  </form>
+<style>
+.records-page{width:100%;max-width:1600px;margin:0 auto}
+.records-header{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:22px}
+.records-title h1{font-size:clamp(28px,3vw,36px);margin-bottom:6px}
+.records-title p{max-width:680px}
+.records-filter{width:220px;flex:0 0 220px}
+.records-table-wrap{width:100%;overflow-x:auto}
+.records-table{width:100%;min-width:720px}
+.records-table tbody tr{cursor:pointer;transition:background .15s ease}
+.records-table tbody tr:hover{background:#f8fafc}
+.records-table tbody tr:focus{outline:2px solid #2563eb;outline-offset:-2px}
+.record-user{display:flex;align-items:center;gap:10px;min-width:150px}
+.record-avatar{width:34px;height:34px;border-radius:10px;background:#eff6ff;color:#2563eb;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:0 0 34px}
+.record-arrow{color:#94a3b8;transition:transform .15s ease,color .15s ease}
+.records-table tbody tr:hover .record-arrow{transform:translateX(3px);color:#2563eb}
+.records-empty{padding:64px 24px}
+@media(max-width:767.98px){
+    .records-header{align-items:stretch;flex-direction:column;gap:14px}
+    .records-filter{width:100%;flex-basis:auto}
+    .records-filter select{width:100%}
+}
+</style>
+
+<div class="records-page">
+    <div class="records-header">
+        <div class="records-title">
+            <div class="text-primary text-uppercase small fw-bold mb-1">Recording history</div>
+            <h1>Records</h1>
+            <p class="text-muted mb-0">See who recorded, when they recorded, and the conversations captured.</p>
+        </div>
+        <form method="get" class="records-filter">
+            <label class="form-label small fw-semibold mb-1" for="tone-filter">Emotional tone</label>
+            <select id="tone-filter" name="tone" class="form-select" onchange="this.form.submit()">
+                <option value="">All tones</option>
+                {% for value,label in tone_choices %}
+                <option value="{{ value }}" {% if selected_tone == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% if selected_tone %}
+            <a href="{% url 'records' %}" class="btn btn-sm btn-link px-0 mt-1 text-decoration-none">Clear filter</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            {% if records %}
+            <div class="records-table-wrap">
+                <table class="table table-hover align-middle mb-0 records-table">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Recorded by</th><th>Device</th><th>Recorded</th><th>Chunks</th>
+                            {% if selected_tone %}<th>Tone matches</th>{% endif %}
+                            <th class="pe-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for record in records %}
+                        <tr onclick="window.location='{% url 'record_detail' record.pk %}'" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location='{% url 'record_detail' record.pk %}';}">
+                            <td class="ps-4">
+                                <div class="record-user">
+                                    <span class="record-avatar">{{ record.user.username|first|upper }}</span>
+                                    <span class="fw-semibold text-truncate">{{ record.user.username }}</span>
+                                </div>
+                            </td>
+                            <td>{{ record.device.name|default:"—" }}</td>
+                            <td class="text-nowrap">{{ record.uploaded_at|date:"d M Y, H:i" }}</td>
+                            <td>{{ record.chunk_count }}</td>
+                            {% if selected_tone %}<td>{{ record.tone_match_count }}</td>{% endif %}
+                            <td class="pe-4 text-end"><i class="bi bi-chevron-right record-arrow"></i></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="records-empty text-center">
+                <div class="mb-3"><i class="bi bi-inbox fs-1 text-muted"></i></div>
+                <div class="fw-semibold mb-1">No records found</div>
+                <div class="text-muted">There are no recordings matching this filter.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if is_paginated %}
+    <nav class="mt-4" aria-label="Records pagination">
+        <ul class="pagination justify-content-center flex-wrap">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_tone %}&tone={{ selected_tone }}{% endif %}">Previous</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_tone %}&tone={{ selected_tone }}{% endif %}">Next</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
-<div class="card"><div class="card-body p-0">
-{% if records %}
-<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4">Recorded by</th><th>Device</th><th>Recorded</th><th>Chunks</th>{% if selected_tone %}<th>Tone matches</th>{% endif %}<th class="pe-4"></th></tr></thead><tbody>
-{% for record in records %}<tr style="cursor:pointer" onclick="window.location='{% url 'record_detail' record.pk %}'"><td class="ps-4 fw-semibold">{{ record.user.username }}</td><td>{{ record.device.name|default:"—" }}</td><td>{{ record.uploaded_at|date:"d M Y, H:i" }}</td><td>{{ record.chunk_count }}</td>{% if selected_tone %}<td>{{ record.tone_match_count }}</td>{% endif %}<td class="pe-4 text-end"><i class="bi bi-chevron-right"></i></td></tr>{% endfor %}
-</tbody></table></div>
-{% else %}<div class="p-5 text-center"><div class="fw-semibold mb-1">No records found</div><div class="text-muted">There are no recordings matching this filter.</div></div>{% endif %}
-</div></div>
-{% if is_paginated %}<nav class="mt-4"><ul class="pagination justify-content-center">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_tone %}&tone={{ selected_tone }}{% endif %}">Previous</a></li>{% endif %}<li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_tone %}&tone={{ selected_tone }}{% endif %}">Next</a></li>{% endif %}</ul></nav>{% endif %}
 {% endblock %}
