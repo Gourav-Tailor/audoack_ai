@@ -1,0 +1,19 @@
+{% extends "audio_analytics/base.html" %}
+{% block title %}Records | AudoAck AI{% endblock %}
+{% block content %}
+<div class="aa-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
+  <div><div class="text-primary text-uppercase small fw-bold">Recording history</div><h1 class="mb-1">Records</h1><p class="text-muted mb-0">See who recorded, when they recorded, and the conversations captured.</p></div>
+  <form method="get" class="d-flex align-items-end gap-2">
+    <div><label class="form-label small fw-semibold mb-1">Emotional tone</label><select name="tone" class="form-select" onchange="this.form.submit()"><option value="">All tones</option>{% for value,label in tone_choices %}<option value="{{ value }}" {% if selected_tone == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    {% if selected_tone %}<a href="{% url 'records' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}
+  </form>
+</div>
+<div class="card"><div class="card-body p-0">
+{% if records %}
+<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4">Recorded by</th><th>Device</th><th>Recorded</th><th>Chunks</th>{% if selected_tone %}<th>Tone matches</th>{% endif %}<th class="pe-4"></th></tr></thead><tbody>
+{% for record in records %}<tr style="cursor:pointer" onclick="window.location='{% url 'record_detail' record.pk %}'"><td class="ps-4 fw-semibold">{{ record.user.username }}</td><td>{{ record.device.name|default:"—" }}</td><td>{{ record.uploaded_at|date:"d M Y, H:i" }}</td><td>{{ record.chunk_count }}</td>{% if selected_tone %}<td>{{ record.tone_match_count }}</td>{% endif %}<td class="pe-4 text-end"><i class="bi bi-chevron-right"></i></td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<div class="p-5 text-center"><div class="fw-semibold mb-1">No records found</div><div class="text-muted">There are no recordings matching this filter.</div></div>{% endif %}
+</div></div>
+{% if is_paginated %}<nav class="mt-4"><ul class="pagination justify-content-center">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_tone %}&tone={{ selected_tone }}{% endif %}">Previous</a></li>{% endif %}<li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_tone %}&tone={{ selected_tone }}{% endif %}">Next</a></li>{% endif %}</ul></nav>{% endif %}
+{% endblock %}

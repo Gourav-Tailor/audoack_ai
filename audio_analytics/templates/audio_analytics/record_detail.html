@@ -1,0 +1,9 @@
+{% extends "audio_analytics/base.html" %}
+{% block title %}Record | AudoAck AI{% endblock %}
+{% block content %}
+<div class="aa-page-header d-flex justify-content-between align-items-start gap-3"><div><a href="{% url 'records' %}" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Records</a><h1 class="mt-3 mb-1">Record</h1><div class="text-muted">{{ record.user.username }} · {{ record.uploaded_at|date:"d M Y, H:i" }}{% if record.device %} · {{ record.device.name }}{% endif %}</div></div></div>
+<div class="card"><div class="card-body p-0">
+{% if chunks %}{% for chunk in chunks %}<div class="p-4 {% if not forloop.last %}border-bottom{% endif %}"><div class="d-flex justify-content-between align-items-center mb-3"><div class="fw-bold">Chunk {{ chunk.number }}</div>{% if chunk.tone %}<span class="badge text-bg-light">{{ chunk.tone }}</span>{% endif %}</div><div class="fs-6" style="white-space:pre-wrap">{{ chunk.transcript }}</div>{% if chunk.audio_url %}<audio class="w-100 mt-3" controls preload="none"><source src="{{ chunk.audio_url }}"></audio>{% endif %}</div>{% endfor %}{% else %}<div class="p-5 text-center"><div class="fw-semibold">No transcripts available yet</div><div class="text-muted">The recording is still processing or has no transcript.</div></div>{% endif %}
+</div></div>
+{% if page_obj.paginator.num_pages > 1 %}<nav class="mt-4"><ul class="pagination justify-content-center">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}<li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}</ul></nav>{% endif %}
+{% endblock %}
