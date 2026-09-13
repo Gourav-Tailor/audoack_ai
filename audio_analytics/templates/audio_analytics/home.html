@@ -1,58 +1,63 @@
 {% extends 'audio_analytics/base.html' %}
 {% load static %}
-{% block title %}AudoAck AI — Audio intelligence for connected devices{% endblock %}
+{% block title %}AudoAck AI — End-to-End Call QA Intelligence{% endblock %}
 {% block content %}
 <style>
-  .aa-brand-logo{width:34px;height:34px;border-radius:10px;display:block;object-fit:contain;flex:0 0 34px}
-  .aa-page{background:#f8fafc;color:#0f172a}
-  .aa-nav{background:rgba(255,255,255,.95);border-bottom:1px solid #e2e8f0;backdrop-filter:blur(12px)}
-  .aa-brand{color:#0f172a;text-decoration:none;font-weight:800;letter-spacing:-.03em}
-  .aa-mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#2563eb;color:#fff}
+  .aa-home{background:#f8fafc;color:#0f172a}
+  .aa-home .aa-wrap{max-width:1180px;margin:0 auto}
+  .aa-nav{background:rgba(255,255,255,.94);border-bottom:1px solid #e2e8f0;backdrop-filter:blur(14px)}
+  .aa-brand{color:#0f172a;text-decoration:none;font-weight:800;letter-spacing:-.035em}
+  .aa-brand-logo{width:34px;height:34px;border-radius:10px;object-fit:contain}
   .aa-nav a{color:#475569;text-decoration:none;font-size:.92rem}
   .aa-nav a:hover{color:#2563eb}
-  .aa-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0f172a,#172554 55%,#1d4ed8);color:#fff;border-radius:28px}
-  .aa-hero:after{content:"";position:absolute;width:420px;height:420px;right:-170px;top:-190px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .aa-hero{position:relative;overflow:hidden;border-radius:30px;background:linear-gradient(135deg,#07111f 0%,#102a56 52%,#2563eb 100%);color:#fff;box-shadow:0 28px 80px rgba(15,23,42,.18)}
+  .aa-hero:before{content:"";position:absolute;width:520px;height:520px;right:-240px;top:-260px;border-radius:50%;background:rgba(96,165,250,.16)}
+  .aa-hero:after{content:"";position:absolute;width:280px;height:280px;left:-150px;bottom:-170px;border-radius:50%;background:rgba(37,99,235,.18)}
   .aa-hero>*{position:relative;z-index:1}
-  .aa-pill{display:inline-flex;align-items:center;gap:.45rem;padding:.42rem .75rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.08);font-size:.8rem}
-  .aa-hero h1{max-width:760px;letter-spacing:-.045em;line-height:1.02}
-  .aa-muted-white{color:rgba(255,255,255,.72)}
-  .aa-product{border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.5);box-shadow:0 24px 70px rgba(2,6,23,.3);backdrop-filter:blur(12px)}
-  .aa-window{border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;background:#0b1220}
-  .aa-window-bar{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .aa-pill{display:inline-flex;align-items:center;gap:.45rem;padding:.42rem .78rem;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.08);font-size:.8rem;font-weight:600}
+  .aa-kicker{color:#2563eb;font-weight:800;font-size:.76rem;text-transform:uppercase;letter-spacing:.13em}
+  .aa-hero h1{max-width:760px;letter-spacing:-.055em;line-height:1.02}
+  .aa-muted-white{color:rgba(255,255,255,.74)}
+  .aa-proof{border-top:1px solid rgba(255,255,255,.14)}
+  .aa-dashboard{border:1px solid rgba(255,255,255,.15);background:rgba(2,6,23,.54);border-radius:20px;box-shadow:0 24px 70px rgba(2,6,23,.35);backdrop-filter:blur(14px)}
+  .aa-window{border:1px solid rgba(255,255,255,.11);border-radius:14px;overflow:hidden;background:#0a1220}
+  .aa-windowbar{height:36px;display:flex;align-items:center;gap:6px;padding:0 12px;border-bottom:1px solid rgba(255,255,255,.08)}
   .aa-dot{width:7px;height:7px;border-radius:50%;background:#64748b}
-  .aa-chart{height:118px;display:flex;align-items:end;gap:6px;padding:18px}
-  .aa-bar{flex:1;border-radius:5px 5px 2px 2px;background:#3b82f6}
-  .aa-section{scroll-margin-top:5rem}
-  .aa-kicker{color:#2563eb;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.12em}
-  .aa-card{height:100%;border:1px solid #e2e8f0;border-radius:18px;background:#fff;transition:.18s}
-  .aa-card:hover{transform:translateY(-3px);box-shadow:0 14px 35px rgba(15,23,42,.08);border-color:#cbd5e1}
-  .aa-icon{width:46px;height:46px;border-radius:13px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-size:20px}
-  .aa-step{width:32px;height:32px;border-radius:50%;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-weight:800}
-  .aa-dark{background:#0f172a;color:#fff;border-radius:22px}
-  .aa-row{border-top:1px solid #e2e8f0}
-  .aa-cta{background:#eff6ff;border:1px solid #dbeafe;border-radius:24px}
-  .aa-footer a{color:#475569;text-decoration:none}
-  .aa-footer a:hover{color:#1d4ed8}
+  .aa-metric{background:#111c2e;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px}
+  .aa-wave{height:78px;display:flex;align-items:center;gap:4px;padding:12px 14px}
+  .aa-wave span{flex:1;border-radius:3px;background:#3b82f6;opacity:.9}
+  .aa-card{height:100%;border:1px solid #e2e8f0;border-radius:20px;background:#fff;transition:.18s}
+  .aa-card:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(15,23,42,.08);border-color:#cbd5e1}
+  .aa-icon{width:48px;height:48px;border-radius:14px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-size:21px}
+  .aa-step{width:34px;height:34px;border-radius:50%;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-weight:800}
+  .aa-dark{background:#0f172a;color:#fff;border-radius:24px}
+  .aa-soft{background:#eff6ff;border:1px solid #dbeafe;border-radius:24px}
+  .aa-problem{border-left:3px solid #2563eb}
+  .aa-check{color:#16a34a;font-weight:800}
+  .aa-badge{display:inline-flex;align-items:center;border-radius:999px;padding:.32rem .62rem;background:#eff6ff;color:#1d4ed8;font-size:.75rem;font-weight:700}
+  .aa-mini-row{border-top:1px solid #e2e8f0}
+  .aa-footer a{color:#475569;text-decoration:none}.aa-footer a:hover{color:#1d4ed8}
   .aa-modal .modal-content{border:0;border-radius:22px;box-shadow:0 28px 80px rgba(15,23,42,.24)}
-  .aa-modal .modal-header{border:0;padding:24px 24px 8px}
-  .aa-modal .modal-body{padding:12px 24px 24px}
+  .aa-modal .modal-header{border:0;padding:24px 24px 8px}.aa-modal .modal-body{padding:12px 24px 24px}
   .aa-modal .form-control{border-radius:10px;padding:.72rem .85rem;border-color:#cbd5e1}
   .aa-modal .form-control:focus{border-color:#2563eb;box-shadow:0 0 0 .2rem rgba(37,99,235,.12)}
-  @media(max-width:768px){.aa-nav-link{display:none}.aa-hero{border-radius:20px}.aa-hero h1{font-size:2.7rem}}
+  @media(max-width:991.98px){.aa-nav-link{display:none}.aa-hero{border-radius:22px}.aa-hero h1{font-size:3rem}}
+  @media(max-width:575.98px){.aa-hero h1{font-size:2.45rem}.aa-dashboard{margin-top:8px}}
 </style>
 
-<div class="aa-page">
+<div class="aa-home">
   <nav class="aa-nav sticky-top">
-    <div class="container py-2" style="max-width:1180px">
+    <div class="aa-wrap container py-2">
       <div class="d-flex align-items-center justify-content-between">
         <a class="aa-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
-          <img class="aa-brand-logo" src="{% static 'audio_analytics/images/audoack-logo.png' %}" alt="AudoAck AI logo"><span>AudoAck AI</span>
+          <img class="aa-brand-logo" src="{% static 'audio_analytics/images/audoack-logo.png' %}" alt="AudoAck AI logo">
+          <span>AudoAck AI</span>
         </a>
         <div class="d-flex align-items-center gap-4">
+          <a class="aa-nav-link" href="#problem">Problem</a>
           <a class="aa-nav-link" href="#platform">Platform</a>
           <a class="aa-nav-link" href="#how-it-works">How it works</a>
-          <a class="aa-nav-link" href="#signals">Analysis</a>
-          <a class="aa-nav-link" href="#privacy">Privacy</a>
+          <a class="aa-nav-link" href="#customers">Customers</a>
           {% if user.is_authenticated %}
             <a class="btn btn-primary btn-sm px-3" href="{% url 'dashboard' %}">Open Dashboard</a>
           {% else %}
@@ -63,121 +68,158 @@
     </div>
   </nav>
 
-  <main class="container py-4 py-lg-5" style="max-width:1180px">
+  <main class="aa-wrap container py-4 py-lg-5">
     <section class="aa-hero p-4 p-lg-5 mb-5">
       <div class="row align-items-center g-5">
         <div class="col-lg-7">
-          <div class="aa-pill mb-4">🎙️ Audio intelligence for connected devices</div>
-          <h1 class="display-3 fw-bold mb-4">Turn real-world audio into useful signals.</h1>
-          <p class="lead aa-muted-white mb-0" style="max-width:650px">
-            AudoAck gives apps and connected devices a simple path from audio capture to AI-assisted analysis, confidence signals and reviewable results.
+          <div class="aa-pill mb-4">🎧 AI-powered Call QA for B2B customer conversations</div>
+          <h1 class="display-3 fw-bold mb-4">Every customer call deserves to be understood.</h1>
+          <p class="lead aa-muted-white mb-0" style="max-width:680px">
+            AudoAck AI turns customer conversations into QA signals—helping support and contact-center teams analyze calls at scale, surface risky conversations, and focus humans on the calls that need attention.
           </p>
           <div class="d-flex flex-wrap gap-2 mt-4">
-            <a href="{% url 'public_demo' %}" class="btn btn-light btn-lg px-4">Try the live demo</a>
-            {% if user.is_authenticated %}
-              <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-lg px-4">Go to dashboard</a>
-            {% else %}
-              <button class="btn btn-outline-light btn-lg px-4" data-bs-toggle="modal" data-bs-target="#loginModal">Sign in</button>
-            {% endif %}
+            <a href="{% url 'public_demo' %}" class="btn btn-light btn-lg px-4">See the live product</a>
+            <a href="https://play.google.com/store/apps/details?id=in.audoack.app&hl=en_IN" target="_blank" rel="noopener" class="btn btn-outline-light btn-lg px-4">Get the Android app</a>
           </div>
           <div class="d-flex flex-wrap gap-4 mt-4 small aa-muted-white">
-            <span><i class="bi bi-check2" aria-hidden="true"></i> Android capture</span><span><i class="bi bi-check2" aria-hidden="true"></i> Device-aware results</span><span><i class="bi bi-check2" aria-hidden="true"></i> Browser dashboard</span>
+            <span><i class="bi bi-check2" aria-hidden="true"></i> End-to-end audio pipeline</span>
+            <span><i class="bi bi-check2" aria-hidden="true"></i> AI-assisted QA signals</span>
+            <span><i class="bi bi-check2" aria-hidden="true"></i> Dashboard & analytics</span>
           </div>
         </div>
-
         <div class="col-lg-5">
-          <div class="aa-product rounded-4 p-3">
+          <div class="aa-dashboard p-3 p-lg-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <div><div class="small text-white-50">AudoAck workspace</div><div class="fw-semibold">Latest analysis</div></div>
-              <span class="badge text-bg-success">Processed</span>
+              <div><div class="small text-white-50">AudoAck QA workspace</div><div class="fw-semibold">Conversation review</div></div>
+              <span class="badge text-bg-success">Analyzed</span>
             </div>
             <div class="aa-window">
-              <div class="aa-window-bar"><span class="aa-dot"></span><span class="aa-dot"></span><span class="aa-dot"></span></div>
+              <div class="aa-windowbar"><span class="aa-dot"></span><span class="aa-dot"></span><span class="aa-dot"></span></div>
               <div class="p-3">
-                <div class="d-flex justify-content-between small text-white-50 mb-2"><span>Audio signal profile</span><span>Confidence 82%</span></div>
-                <div class="progress mb-3" style="height:7px;background:#1e293b"><div class="progress-bar" style="width:82%"></div></div>
-                <div class="aa-chart">
-                  <span class="aa-bar" style="height:35%"></span><span class="aa-bar" style="height:62%"></span><span class="aa-bar" style="height:46%"></span><span class="aa-bar" style="height:78%"></span><span class="aa-bar" style="height:58%"></span><span class="aa-bar" style="height:88%"></span><span class="aa-bar" style="height:68%"></span><span class="aa-bar" style="height:96%"></span><span class="aa-bar" style="height:74%"></span><span class="aa-bar" style="height:52%"></span>
+                <div class="d-flex justify-content-between small text-white-50 mb-2"><span>Customer call</span><span>QA coverage</span></div>
+                <div class="progress mb-3" style="height:7px;background:#1e293b"><div class="progress-bar" style="width:92%"></div></div>
+                <div class="aa-wave mb-2">
+                  <span style="height:32%"></span><span style="height:58%"></span><span style="height:42%"></span><span style="height:76%"></span><span style="height:55%"></span><span style="height:88%"></span><span style="height:67%"></span><span style="height:95%"></span><span style="height:62%"></span><span style="height:82%"></span><span style="height:46%"></span><span style="height:72%"></span>
                 </div>
-                <div class="row g-2 mt-1">
-                  <div class="col-4"><div class="rounded-3 p-2" style="background:#111c2e"><div class="small text-white-50">Tone</div><div class="fw-semibold">Detected</div></div></div>
-                  <div class="col-4"><div class="rounded-3 p-2" style="background:#111c2e"><div class="small text-white-50">Quality</div><div class="fw-semibold">Good</div></div></div>
-                  <div class="col-4"><div class="rounded-3 p-2" style="background:#111c2e"><div class="small text-white-50">Noise</div><div class="fw-semibold">Low</div></div></div>
+                <div class="row g-2">
+                  <div class="col-4"><div class="aa-metric"><div class="small text-white-50">Tone</div><div class="fw-semibold">Frustrated</div></div></div>
+                  <div class="col-4"><div class="aa-metric"><div class="small text-white-50">Risk</div><div class="fw-semibold">Review</div></div></div>
+                  <div class="col-4"><div class="aa-metric"><div class="small text-white-50">Quality</div><div class="fw-semibold">Good</div></div></div>
                 </div>
               </div>
             </div>
-            <div class="small text-white-50 mt-3">Capture <i class="bi bi-arrow-right" aria-hidden="true"></i> upload <i class="bi bi-arrow-right" aria-hidden="true"></i> analyze <i class="bi bi-arrow-right" aria-hidden="true"></i> review</div>
+            <div class="small text-white-50 mt-3">Ingest → analyze → score → surface → act</div>
           </div>
+        </div>
+      </div>
+      <div class="aa-proof mt-5 pt-4">
+        <div class="row g-3 small aa-muted-white">
+          <div class="col-md-4"><strong class="text-white">Built for high-volume voice teams</strong><br>BPOs, contact centers and customer-support operations</div>
+          <div class="col-md-4"><strong class="text-white">From calls to action</strong><br>QA signals, frustration, quality and escalation-risk indicators</div>
+          <div class="col-md-4"><strong class="text-white">Pilot-ready product</strong><br>Working web application, asynchronous processing and live Android capture</div>
         </div>
       </div>
     </section>
 
-    <section class="mb-5">
-      <div class="row g-3 text-center">
-        <div class="col-md-4"><div class="border-start border-3 border-primary py-2"><div class="fw-bold">Capture anywhere</div><div class="small text-muted">Mobile and connected-device audio workflows</div></div></div>
-        <div class="col-md-4"><div class="border-start border-3 border-primary py-2"><div class="fw-bold">Analyze consistently</div><div class="small text-muted">Structured signals from every submitted recording</div></div></div>
-        <div class="col-md-4"><div class="border-start border-3 border-primary py-2"><div class="fw-bold">Review in one place</div><div class="small text-muted">Dashboard, batches and latest device results</div></div></div>
+    <section class="aa-section mb-5" id="problem">
+      <div class="row align-items-end g-4">
+        <div class="col-lg-7">
+          <div class="aa-kicker mb-2">The problem</div>
+          <h2 class="display-6 fw-bold mb-3">Your QA team cannot listen to every call. Your customers still expect every call to matter.</h2>
+          <p class="text-muted mb-0">Manual call review samples a small percentage of conversations. By the time a supervisor finds frustration, an escalation or a recurring issue, the opportunity to intervene may already be gone.</p>
+        </div>
+        <div class="col-lg-5">
+          <div class="aa-card p-4 aa-problem">
+            <div class="fw-bold mb-3">What gets missed</div>
+            <div class="d-grid gap-2 small text-muted">
+              <div>• Frustrated or unhappy customers</div>
+              <div>• Escalation-risk conversations</div>
+              <div>• Agent coaching opportunities</div>
+              <div>• Repeated customer problems</div>
+              <div>• Poor audio quality affecting CX</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="aa-section mb-5" id="platform">
-      <div class="mb-4"><div class="aa-kicker mb-2">The platform</div><h2 class="fw-bold display-6 mb-2">One workflow from sound to signal.</h2><p class="text-muted mb-0">AudoAck is designed around the actual path your audio takes through the system.</p></div>
+      <div class="mb-4"><div class="aa-kicker mb-2">The AudoAck platform</div><h2 class="display-6 fw-bold mb-2">Automate the work around call QA—not the human judgment that matters.</h2><p class="text-muted mb-0" style="max-width:780px">AudoAck is designed to give QA and operations teams a continuous intelligence layer across customer conversations.</p></div>
       <div class="row g-4">
-        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">📱</div><h4 class="fw-bold">Capture</h4><p class="text-muted mb-0">Record audio from the Android app or a connected device and send it to the AudoAck backend.</p></div></div>
-        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">⚙️</div><h4 class="fw-bold">Process</h4><p class="text-muted mb-0">Process submitted audio and produce structured analysis results for each recording.</p></div></div>
-        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">📊</div><h4 class="fw-bold">Understand</h4><p class="text-muted mb-0">Review signals, confidence values, batch results and latest device analysis.</p></div></div>
+        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">🎙️</div><h4 class="fw-bold">Conversation ingestion</h4><p class="text-muted mb-0">Bring customer-call audio into an authenticated, device-aware workflow for batch or ongoing processing.</p></div></div>
+        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">🧠</div><h4 class="fw-bold">AI analysis</h4><p class="text-muted mb-0">Extract conversation and audio signals such as emotional tone, intensity, noise, quality, overlap and silence.</p></div></div>
+        <div class="col-md-4"><div class="aa-card p-4"><div class="aa-icon mb-3">🚨</div><h4 class="fw-bold">QA intelligence</h4><p class="text-muted mb-0">Turn analysis into risk and QA signals so teams can prioritize the conversations that need human attention.</p></div></div>
       </div>
     </section>
 
     <section class="aa-section mb-5" id="how-it-works">
-      <div class="text-center mb-4"><div class="aa-kicker mb-2">How it works</div><h2 class="fw-bold display-6">Simple for users. Structured for systems.</h2></div>
-      <div class="row g-4">
-        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">1</div><h5 class="fw-bold">Record</h5><p class="text-muted mb-0">Capture a short audio segment from the app or device.</p></div></div>
-        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">2</div><h5 class="fw-bold">Send</h5><p class="text-muted mb-0">Upload the recording through the authenticated workflow.</p></div></div>
-        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">3</div><h5 class="fw-bold">Analyze</h5><p class="text-muted mb-0">Run the audio through the analysis pipeline and capture signals.</p></div></div>
-        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><div class="aa-step mb-3">4</div><h5 class="fw-bold">Review</h5><p class="text-muted mb-0">Inspect results in the dashboard or retrieve latest device analysis.</p></div></div>
-      </div>
-    </section>
-
-    <section class="aa-section mb-5" id="signals">
-      <div class="row g-4">
-        <div class="col-lg-7">
-          <div class="aa-card p-4 p-lg-5">
-            <div class="aa-kicker mb-2">Analysis</div>
-            <h2 class="fw-bold mb-3">Signals that make recordings easier to understand.</h2>
-            <p class="text-muted mb-4">The current analysis experience exposes multiple audio characteristics rather than a single opaque score.</p>
+      <div class="aa-dark p-4 p-lg-5">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-5"><div class="small text-white-50 text-uppercase fw-bold" style="letter-spacing:.12em">End-to-end workflow</div><h2 class="display-6 fw-bold mt-2 mb-3">From customer call to actionable QA signal.</h2><p class="text-white-50 mb-0">The goal is simple: stop asking supervisors to search thousands of calls manually. Let AI surface where attention is most valuable.</p></div>
+          <div class="col-lg-7">
             <div class="row g-3">
-              <div class="col-sm-6"><strong>Emotional tone</strong><div class="small text-muted">Tone category and confidence information.</div></div>
-              <div class="col-sm-6"><strong>Intensity</strong><div class="small text-muted">Low, medium or high intensity indicators.</div></div>
-              <div class="col-sm-6"><strong>Background noise</strong><div class="small text-muted">Presence and severity indicators.</div></div>
-              <div class="col-sm-6"><strong>Audio quality</strong><div class="small text-muted">Signals describing recording quality.</div></div>
-              <div class="col-sm-6"><strong>Speaker overlap</strong><div class="small text-muted">Signals for overlapping speech.</div></div>
-              <div class="col-sm-6"><strong>Long silence</strong><div class="small text-muted">Indicators for extended silent segments.</div></div>
+              <div class="col-sm-6"><div class="aa-metric h-100"><div class="aa-step mb-3">1</div><h5 class="fw-bold text-white">Ingest</h5><p class="small text-white-50 mb-0">Customer-call recordings enter the AudoAck processing pipeline.</p></div></div>
+              <div class="col-sm-6"><div class="aa-metric h-100"><div class="aa-step mb-3">2</div><h5 class="fw-bold text-white">Analyze</h5><p class="small text-white-50 mb-0">AI extracts transcript, emotion and audio/conversation quality signals.</p></div></div>
+              <div class="col-sm-6"><div class="aa-metric h-100"><div class="aa-step mb-3">3</div><h5 class="fw-bold text-white">Score</h5><p class="small text-white-50 mb-0">Combine signals into QA, risk and priority indicators for review.</p></div></div>
+              <div class="col-sm-6"><div class="aa-metric h-100"><div class="aa-step mb-3">4</div><h5 class="fw-bold text-white">Act</h5><p class="small text-white-50 mb-0">Give managers dashboards, alerts and coaching insights instead of another call queue.</p></div></div>
             </div>
           </div>
         </div>
-        <div class="col-lg-5"><div class="aa-dark p-4 p-lg-5 h-100"><div class="small text-white-50">Built for iteration</div><h3 class="fw-bold my-3">Start with audio. Build from the data.</h3><p class="text-white-50">Try the public analyzer, then sign in to work with your recordings, batches and devices.</p><a class="btn btn-light mt-2" href="{% url 'public_demo' %}">Open live demo <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div></div>
+      </div>
+    </section>
+
+    <section class="aa-section mb-5" id="customers">
+      <div class="text-center mb-4"><div class="aa-kicker mb-2">Who we are building for</div><h2 class="display-6 fw-bold">Start where conversation volume is high.</h2><p class="text-muted mb-0">AudoAck's initial B2B beachhead is teams where manual QA becomes expensive and incomplete.</p></div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><span class="aa-badge mb-3">BPO</span><h5 class="fw-bold">BPOs & call centers</h5><p class="text-muted small mb-0">Increase QA coverage without increasing the number of calls supervisors must manually review.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><span class="aa-badge mb-3">SUPPORT</span><h5 class="fw-bold">Customer support</h5><p class="text-muted small mb-0">Find unhappy customers, recurring issues and agent coaching opportunities earlier.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><span class="aa-badge mb-3">SALES</span><h5 class="fw-bold">Tele-sales teams</h5><p class="text-muted small mb-0">Create a scalable conversation-review layer for high-volume customer interactions.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="aa-card p-4"><span class="aa-badge mb-3">CX</span><h5 class="fw-bold">Fintech, insurance & e-commerce</h5><p class="text-muted small mb-0">Monitor conversation quality across customer-facing voice operations.</p></div></div>
       </div>
     </section>
 
     <section class="mb-5">
-      <div class="aa-row py-4"><div class="row align-items-center g-3"><div class="col-md-5"><h4 class="fw-bold mb-0">Device-aware workflows</h4></div><div class="col-md-7 text-muted">Connect recordings to devices and retrieve the latest available analysis through application APIs.</div></div></div>
-      <div class="aa-row py-4"><div class="row align-items-center g-3"><div class="col-md-5"><h4 class="fw-bold mb-0">Batch processing</h4></div><div class="col-md-7 text-muted">Upload batches for asynchronous processing and inspect detailed results and metrics.</div></div></div>
-      <div class="aa-row py-4"><div class="row align-items-center g-3"><div class="col-md-5"><h4 class="fw-bold mb-0">Usage-aware billing</h4></div><div class="col-md-7 text-muted">Track usage and payments as the AudoAck service evolves.</div></div></div>
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="aa-card p-4 p-lg-5 h-100">
+            <div class="aa-kicker mb-2">Why AudoAck</div>
+            <h3 class="fw-bold mb-4">Built as a system, not just a model.</h3>
+            <div class="d-grid gap-3">
+              <div><span class="aa-check">✓</span> <strong>Low-cost, asynchronous inference architecture</strong><div class="small text-muted ms-4">Designed to process audio without requiring a supervisor to wait for every result.</div></div>
+              <div><span class="aa-check">✓</span> <strong>Privacy-oriented deployment</strong><div class="small text-muted ms-4">Self-hosted inference capability and an architecture that avoids mandatory third-party inference APIs.</div></div>
+              <div><span class="aa-check">✓</span> <strong>Domain-specific learning loop</strong><div class="small text-muted ms-4">Customer feedback and conversation datasets can improve domain-specific models over time.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="aa-soft p-4 p-lg-5 h-100">
+            <div class="aa-kicker mb-2">What we measure</div>
+            <h3 class="fw-bold mb-3">Business outcomes, not vanity AI metrics.</h3>
+            <div class="d-grid gap-2 small text-muted">
+              <div>• QA coverage</div><div>• Minutes analyzed</div><div>• Processing cost per minute</div><div>• False-positive rate</div><div>• Processing latency</div><div>• Pilot → paid conversion</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section class="aa-section mb-5" id="privacy">
-      <div class="aa-cta p-4 p-lg-5"><div class="row align-items-center g-4"><div class="col-lg-8"><div class="aa-kicker mb-2">Privacy & data</div><h3 class="fw-bold mb-2">Audio should be handled deliberately.</h3><p class="text-muted mb-0">Review how AudoAck handles account, device, audio and analysis information before using the service.</p></div><div class="col-lg-4 text-lg-end"><a href="{% url 'privacy_policy' %}" class="btn btn-outline-primary px-4">Read privacy policy</a></div></div></div>
+    <section class="mb-5">
+      <div class="aa-card p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8"><div class="aa-kicker mb-2">Product today → B2B platform next</div><h3 class="fw-bold mb-2">A working MVP is already running. The next step is customer validation.</h3><p class="text-muted mb-0">The current platform has an operational audio upload → processing → dashboard workflow. Our roadmap adds automated QA scoring, agent analytics, alerts, APIs and CRM/contact-center integrations through real customer pilots.</p></div>
+          <div class="col-lg-4 text-lg-end"><a href="https://play.google.com/store/apps/details?id=in.audoack.app&hl=en_IN" target="_blank" rel="noopener" class="btn btn-outline-primary px-4">View live Android app</a></div>
+        </div>
+      </div>
     </section>
 
-    <section class="mb-4">
+    <section class="mb-5">
       <div class="aa-dark text-center p-4 p-lg-5">
-        <div class="aa-pill mb-3">AudoAck AI</div>
-        <h2 class="fw-bold display-6">Ready to hear what your data can tell you?</h2>
-        <p class="text-white-50 mx-auto mb-4" style="max-width:650px">Try the analyzer without an account, or sign in to manage your own audio workflows and connected devices.</p>
+        <div class="aa-pill mb-3">AudoAck AI · Call QA Intelligence</div>
+        <h2 class="display-6 fw-bold">Ready to stop sampling calls and start understanding them?</h2>
+        <p class="text-white-50 mx-auto mb-4" style="max-width:720px">We are looking for BPOs, contact centers and high-volume support teams to run focused pilots and validate the impact of AI-assisted call QA.</p>
         <div class="d-flex justify-content-center flex-wrap gap-2">
-          <a href="{% url 'public_demo' %}" class="btn btn-light btn-lg px-4">Try the demo</a>
-          {% if not user.is_authenticated %}<button class="btn btn-outline-light btn-lg px-4" data-bs-toggle="modal" data-bs-target="#loginModal">Sign in</button>{% else %}<a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-lg px-4">Open dashboard</a>{% endif %}
+          <a href="{% url 'public_demo' %}" class="btn btn-light btn-lg px-4">Explore the product</a>
+          <a href="mailto:gourav.tailor.ai@gmail.com?subject=AudoAck%20B2B%20Call%20QA%20Pilot" class="btn btn-outline-light btn-lg px-4">Request a B2B pilot</a>
         </div>
       </div>
     </section>

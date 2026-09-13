@@ -213,7 +213,51 @@ main .form-select {
 }
 
 </style>
-</head>
+<!-- AudoAck home/landing layout fix v6 -->
+<style id='audoack-home-layout-v6'>
+/* AudoAck home/landing layout fix v5 */
+/* Default: public/landing pages use the full viewport.
+   Authenticated pages are opted into the sidebar offset by JS only when #aa-sidebar exists. */
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+
+main {
+  width:100%;
+  max-width:100%;
+  margin-left:0;
+  box-sizing:border-box;
+  min-width:0;
+}
+
+/* Only pages that actually contain the application sidebar reserve its collapsed width. */
+@media (min-width: 992px) {
+  body.aa-has-sidebar main {
+    width:calc(100% - var(--aa-sidebar-width, 76px));
+    max-width:none;
+    margin-left:var(--aa-sidebar-width, 76px);
+  }
+}
+
+@media (max-width: 991.98px) {
+  body.aa-has-sidebar main {
+    width:100% !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+  }
+}
+
+main, main > *, .container, .container-fluid, .row, [class*="col-"], .card, .card-body {
+  min-width:0;
+  box-sizing:border-box;
+}
+
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('aa-sidebar')) {
+        document.body.classList.add('aa-has-sidebar');
+    }
+});
+</script></head>
 <body class="{% if user.is_authenticated %}aa-authenticated{% endif %}">
 <div class="container-fluid"><div class="row">
 {% if user.is_authenticated %}<aside class="sidebar d-flex flex-column" id="aa-sidebar">
@@ -237,4 +281,5 @@ main .form-select {
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>
+
 
