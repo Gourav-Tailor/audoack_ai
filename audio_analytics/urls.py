@@ -20,6 +20,7 @@ from .mobile_api import (
     MobileDevicesView,
     MobileLoginView,
     MobileLogoutView,
+    MobileRefreshView,
 )
 from .views import (
     BatchDetailView,
@@ -59,6 +60,7 @@ urlpatterns = [
     path("api/v1/demo/<int:batch_id>/analysis/", PublicDemoAnalysisView.as_view(), name="api_v1_demo_analysis"),
     path("api/v1/demo/<int:batch_id>/finalize/", PublicDemoFinalizeView.as_view(), name="api_v1_demo_finalize"),
     path("api/v1/mobile/login/", MobileLoginView.as_view(), name="mobile_login"),
+    path("api/v1/mobile/refresh/", MobileRefreshView.as_view(), name="mobile_refresh"),
     path("api/v1/mobile/logout/", MobileLogoutView.as_view(), name="mobile_logout"),
     path("api/v1/mobile/devices/", MobileDevicesView.as_view(), name="mobile_devices"),
     path("api/v1/mobile/devices/<int:device_id>/latest-analysis/", MobileDeviceLatestAnalysisView.as_view(), name="mobile_device_latest_analysis"),

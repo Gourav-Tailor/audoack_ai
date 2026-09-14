@@ -106,7 +106,6 @@ class AudioAnalysis(models.Model):
     long_silence_present = models.BooleanField(default=False)
     confidence = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(1.0)], null=True, blank=True)
 
-    # Local faster-whisper transcription fields.
     transcript = models.TextField(blank=True, default="")
     transcription_language = models.CharField(max_length=20, blank=True, default="")
     transcription_confidence = models.FloatField(null=True, blank=True)
@@ -152,6 +151,43 @@ class MobileAuthToken(models.Model):
 
     def __str__(self):
         return f"Mobile token for {self.user.username}"
+
+
+class MobileRefreshToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mobile_refresh_tokens")
+    token = models.CharField(max_length=96, unique=True, editable=False)
+    access_token = models.OneToOneField(
+        MobileAuthToken,
+        on_delete=models.CASCADE,
+        related_name="refresh_token_record",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["token", "revoked_at"]),
+            models.Index(fields=["user", "revoked_at"]),
+            models.Index(fields=["expires_at"]),
+        ]
+
+    @classmethod
+    def issue(cls, user, access_token, expires_at):
+        return cls.objects.create(
+            user=user,
+            access_token=access_token,
+            token=secrets.token_urlsafe(64),
+            expires_at=expires_at,
+        )
+
+    def is_expired(self):
+        from django.utils import timezone
+        return self.expires_at <= timezone.now()
+
+    def __str__(self):
+        return f"Mobile refresh token for {self.user.username}"
 
 
 class Payment(models.Model):
